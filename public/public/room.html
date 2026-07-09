@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="UTF-8"><title>الشات</title>
+<link href="style.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="/socket.io/socket.io.js"></script></head>
+<body class="bg-gray-800 text-white flex flex-col h-screen">
+
+<!-- الشريط العلوي -->
+<header class="bg-gray-900 p-2 flex justify-between items-center">
+  <div>☰ قائمة</div>
+  <div class="flex gap-4">
+    <span>🛒 Store</span><span>✉️ خاص</span><span>👥 متواجدين</span>
+    <span>❤️ لايكات</span><span id="reports">📭 بلاغات</span>
+    <img id="myAvatar" class="w-8 h-8 rounded-full">
+  </div>
+</header>
+
+<!-- منطقة الشات -->
+<main class="flex-1 flex">
+  <div id="chatArea" class="flex-1 overflow-y-auto p-4"></div>
+  <aside id="userList" class="w-64 bg-gray-900 p-2 overflow-y-auto"></aside>
+</main>
+
+<!-- شريط الكتابة -->
+<footer class="bg-gray-900 p-2 flex gap-2">
+  <button>+</button>
+  <button>🫥</button>
+  <input id="msgInput" class="flex-1 text-black p-2 rounded" placeholder="اكتب هنا...">
+  <button>🎤</button>
+  <button onclick="sendMsg()" class="bg-blue-600 px-4 rounded">➤</button>
+</footer>
+
+<!-- شريط سفلي -->
+<nav class="bg-black p-2 flex justify-around">
+  <span>🔇</span><span>▶️ إذاعة</span><span id="roomName"></span>
+  <span>⚙️</span><span>🏠</span><span>👤</span>
+</nav>
+
+<script src="client.js"></script>
+</body></html>
