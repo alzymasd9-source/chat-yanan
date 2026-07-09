@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="UTF-8"><title>ملفي</title><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="bg-gray-900 text-white p-6">
+<div class="bg-gray-800 p-6 rounded max-w-lg mx-auto">
+  <a href="/room.html" class="text-blue-400">الرجوع للغرفة</a>
+  <img src="https://i.pravatar.cc/100" class="w-24 h-24 rounded-full mx-auto mt-2">
+  <h2 class="text-center text-xl mt-2" id="pname"></h2>
+  <p class="text-center" id="prank"></p>
+  
+  <div class="mt-4 space-y-2">
+    <p>💵 الرصيد: <span id="pcoins"></span></p>
+    <p>🎂 العمر: <span id="page"></span></p>
+    <p>⚧ الجنس: <span id="pgender"></span></p>
+    <p>🏠 الغرفة: <span id="proom"></span></p>
+  </div>
+
+  <div class="mt-4" id="customBox" style="display:none">
+    <h3>تخصيص - للمميز+</h3>
+    <label>لون الاسم:</label> <input type="color" id="colorPicker" class="ml-2">
+    <label>حجم الخط:</label> <input type="number" id="fontSize" min="12" max="24" class="text-black w-16">
+    <button onclick="saveCustom()" class="bg-green-600 p-2 rounded mt-2">حفظ</button>
+  </div>
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem('user'));
+pname.innerText = user.username;
+prank.innerText = user.rank;
+pcoins.innerText = user.coins;
+page.innerText = user.age;
+pgender.innerText = user.gender;
+proom.innerText = user.room;
+colorPicker.value = user.color;
+fontSize.value = user.fontSize;
+
+if(['مميز','مشرف','ادارة','ادمن','المالك'].includes(user.rank)){
+  customBox.style.display = 'block';
+}
+
+function saveCustom(){
+  user.color = colorPicker.value;
+  user.fontSize = fontSize.value;
+  localStorage.setItem('user', JSON.stringify(user));
+  fetch('/admin/editUser',{method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({admin:user.username,target:user.username,data:{color:user.color,fontSize:user.fontSize}})})
+  alert('تم الحفظ');
+}
+</script>
+</body></html>
