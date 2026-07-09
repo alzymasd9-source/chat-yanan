@@ -1,0 +1,38 @@
+<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>الغرفة</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="/socket.io/socket.io.js"></script>
+<link href="style.css" rel="stylesheet"></head>
+<body class="bg-gray-800 text-white flex-col h-screen">
+
+<header class="bg-gray-900 p-2 flex justify-between items-center">
+  <div>☰ قائمة</div>
+  <div class="flex gap-4">
+    <a href="/store.html">🛒 Store</a><a href="/pm.html">✉️ خاص</a>
+    <a>👥 متواجدين</a><a>❤️ لايكات</a>
+    <a href="/admin.html" id="adminBtn" style="display:none">📭 بلاغات</a>
+    <a href="/profile.html"><img id="myAvatar" class="w-8 h-8 rounded-full"></a>
+  </div>
+</header>
+
+<main class="flex-1 flex">
+  <div id="chatArea" class="flex-1 overflow-y-auto p-4"></div>
+  <aside id="userList" class="w-64 bg-gray-900 p-2 overflow-y-auto"></aside>
+</main>
+
+<footer class="bg-gray-900 p-2 flex gap-2 items-center">
+  <button onclick="showUpload()" id="uploadBtn" style="display:none">+</button>
+  <button>🫥</button>
+  <input id="msgInput" class="flex-1 text-black p-2 rounded" placeholder="اكتب هنا...">
+  <button onclick="startVoice()">🎤</button>
+  <button onclick="sendMsg()" class="bg-blue-600 px-4 rounded">➤</button>
+</footer>
+<input type="file" id="fileInput" style="display:none">
+<div id="youtubeBox" class="hidden bg-gray-900 p-2"><input id="youtubeLink" class="text-black"><button onclick="sendYoutube()">ارسال</button></div>
+
+<nav class="bg-black p-2 flex justify-around">
+  <button onclick="toggleMute()">🔇</button><button onclick="playRadio()">▶️ إذاعة</button>
+  <span id="roomName"></span><a href="/settings.html">⚙️</a><a href="/rooms.html">🏠</a><a href="/profile.html">👤</a>
+</nav>
+<audio id="radio" src="https://stream.zeno.fm/0r0a792kwz8uv"></audio>
+
+<script src="client.js"></script></body></html>
