@@ -4,8 +4,12 @@ const { Server } = require("socket.io");
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
-const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
+const axios = require('axios'); // جديد
+const FormData = require('form-data'); // جديد
+const fs = require('fs'); // جديد
+const path = require('path');
+
 const upload = multer({dest: 'uploads/'});
 
 const app = express();
@@ -15,14 +19,15 @@ const io = new Server(server, { cors: { origin: "*" } });
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+app.use('/uploads', express.static('uploads')); // عشان الصور المؤقتة
 
-// ====== الاعدادات غيرها ======
-mongoose.connect('mongodb+srv://user:pass@cluster.mongodb.net/chatyemen');
-cloudinary.config({
-  cloud_name: 'cloud_name',
-  api_key: 'api_key',
-  api_secret: 'api_secret'
-});
+// ====== الاعدادات ======
+mongoose.connect('mongodb+srv://yemenadmin:737946244@cluster0.ywgsrhl.mongodb.net/chatyemen?retryWrites=true&w=majority&appName=Cluster0')
+.then(()=> console.log('✅ متصل بقاعدة البيانات'))
+.catch(err=> console.log('❌ خطأ الاتصال:', err));
+
+// حط مفتاح imgbb حقك هنا
+const IMGBB_KEY = 'مفتاحك_هنا';
 
 // ====== سكيمات قاعدة البيانات ======
 const UserSchema = new mongoose.Schema({
@@ -115,9 +120,22 @@ app.get('/wall/:user', async (req,res)=>{ res.json(await Wall.find({owner:req.pa
 app.post('/pm/send', async (req,res)=>{ await new PM(req.body).save(); res.json({ok:true}); });
 app.get('/pm/:u1/:u2', async (req,res)=>{ res.json(await PM.find({$or:[{from:req.params.u1,to:req.params.u2},{from:req.params.u2,to:req.params.u1}]}).sort({date:1})); });
 
+// ====== رفع الصور على imgbb ======
 app.post('/upload', upload.single('file'), async (req,res)=>{
-  const result = await cloudinary.uploader.upload(req.file.path);
-  res.json({url: result.secure_url});
+  try {
+    const form = new FormData();
+    form.append('image', fs.createReadStream(req.file.path));
+
+    const response = await axios.post(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, form, {
+      headers: form.getHeaders()
+    });
+
+    fs.unlinkSync(req.file.path); // نمسح الملف المؤقت
+    res.json({url: response.data.data.url});
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({error: 'فشل الرفع'});
+  }
 });
 
 // ====== SOCKET ======
@@ -185,8 +203,7 @@ io.on('connection', (socket) => {
   socket.on('voiceOn', (username)=> io.to(socket.room).emit('voiceOn', username));
 
   socket.on('disconnect', ()=>{
-    if(socket.user?.rank === 'زائر') delete onlineUsers[socket.id];
-    else delete onlineUsers[socket.id];
+    delete onlineUsers[socket.id];
     io.emit('userList', Object.values(onlineUsers));
   });
 });
