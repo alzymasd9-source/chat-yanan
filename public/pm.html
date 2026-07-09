@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="UTF-8"><title>خاص</title><script src="https://cdn.tailwindcss.com"></script>
+<script src="/socket.io/socket.io.js"></script></head>
+<body class="bg-gray-900 text-white p-4 flex flex-col h-screen">
+<h1>✉️ الخاص مع: <span id="toUser"></span></h1>
+<a href="/room.html" class="text-blue-400">الرجوع للغرفة</a>
+
+<div id="pmArea" class="flex-1 overflow-y-auto bg-gray-800 p-4 rounded mt-2"></div>
+<div class="flex mt-2">
+  <input id="pmInput" class="flex-1 text-black p-2 rounded">
+  <button onclick="sendPM()" class="bg-blue-600 px-4 rounded">ارسال</button>
+</div>
+
+<script>
+const socket = io();
+const user = JSON.parse(localStorage.getItem('user'));
+const target = new URLSearchParams(location.search).get('to') || prompt('اسم العضو؟');
+toUser.innerText = target;
+
+async function loadPM(){
+  let res = await fetch(`/pm/${user.username}/${target}`);
+  let msgs = await res.json();
+  pmArea.innerHTML = msgs.map(m=>`<p><b>${m.from}:</b> ${m.text}</p>`).join('');
+}
+loadPM();
+
+function sendPM(){
+  const data = {from:user.username, to:target, text:pmInput.value};
+  socket.emit('pm', data);
+  fetch('/pm/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  pmArea.innerHTML += `<p><b>انت:</b> ${pmInput.value}</p>`;
+  pmInput.value='';
+}
+
+socket.on('pm', (data)=>{ if(data.from===target) pmArea.innerHTML += `<p><b>${data.from}:</b> ${data.text}</p>`; });
+</script>
+</body></html>
