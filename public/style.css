@@ -1,0 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+body { font-family: 'Cairo', sans-serif; }
+.chat-bubble { background: #1e293b; border-radius: 12px; padding: 10px; margin: 8px 0; }
+.rank-زائر{border-right:4px solid #fff}
+.rank-عضو{border-right:4px solid #3b82f6}
+.rank-مميز{border-right:4px solid #a855f7}
+.rank-مشرف{border-right:4px solid #22c55e}
+.rank-المالك{border-right:4px solid #f59e0b; box-shadow:0 0 10px #f59e0b}
