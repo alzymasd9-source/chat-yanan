@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="UTF-8"><title>المتجر</title><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="bg-gray-900 text-white p-6">
+<h1 class="text-2xl">🛒 المتجر</h1>
+<a href="/room.html" class="text-blue-400">الرجوع للغرفة</a>
+<p class="mt-2">رصيدك الحالي: <span id="coins">0</span> 💵</p>
+
+<div class="grid grid-cols-3 gap-4 mt-4">
+  <div class="bg-gray-800 p-4 rounded text-center">
+    <h3 class="text-xl">💎 مميز</h3>
+    <p>السعر: 500 رصيد</p>
+    <p class="text-xs">رفع صور + يوتيوب + تخصيص الاسم</p>
+    <button onclick="buy('مميز',500)" class="bg-yellow-600 p-2 rounded mt-2 w-full">شراء</button>
+  </div>
+  <div class="bg-gray-800 p-4 rounded text-center">
+    <h3 class="text-xl">🛡️ مشرف</h3>
+    <p>السعر: 2000 رصيد</p>
+    <p class="text-xs">كتم + طرد + حذف رسائل</p>
+    <button onclick="buy('مشرف',2000)" class="bg-red-600 p-2 rounded mt-2 w-full">شراء</button>
+  </div>
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem('user'));
+coins.innerText = user.coins;
+
+function buy(rank, price){
+  fetch('/buyRank',{method:'POST',headers:{'Content-Type':'application/json'},
+  body: JSON.stringify({username: user.username, rank, price})
+  }).then(r=>r.json()).then(res=>{
+    if(res.success){
+      localStorage.setItem('user', JSON.stringify(res.user));
+      alert('تم الشراء بنجاح');
+      location.reload();
+    } else alert(res.msg);
+  })
+}
+</script>
+</body></html>
