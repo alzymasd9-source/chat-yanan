@@ -1,127 +1,152 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
+دconst express = require('express');
 const http = require('http');
-const { Server } = require("socket.io");
+const { Server } = require('socket.io');
+const cors = require('cors');
 const multer = require('multer');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors:{origin:"*"} });
+const io = new Server(server, { cors: { origin: "*" } });
 
-app.use(express.json());
 app.use(cors());
-
-// انشاء مجلد uploads لو مش موجود
-if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
+app.use(express.json());
+app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
 
-// عشان يقرا ملفات الواجهة لو حطيتها في public
-app.use(express.static(path.join(__dirname, 'public')));
+// انشاء مجلد الرفع
+if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
 
-// ربط مونغو
-mongoose.connect(process.env.MONGO_URL || "mongodb://localhost:27017/yemenchat")
-.then(()=> console.log("✅ متصل بقاعدة البيانات"))
-.catch(err=> console.log("❌ خطأ المونغو:", err));
+// قاعدة بيانات مؤقتة - تتغير لو طفى السيرفر
+let users = [];
+let msgs = { 'العامة': [], 'اليمن': [], 'الجزائر': [], 'مصر': [] };
+let news = [];
+let logs = [];
+let friendsWall = [];
+let roomMods = {};
 
-// الجداول
-const User = mongoose.model("User", new mongoose.Schema({
-  name:String, pass:String, rank:{type:String,default:"visitor"},
-  coins:{type:Number,default:0}, gender:{type:String,default:""},
-  avatar:{type:String,default:""}, wall:{type:String,default:""},
-  pmSetting:{type:Number,default:1}, friends:{type:[String],default:[]},
-  likes:{type:[String],default:[]}, theme:{type:String,default:"dark"},
-  mutedUntil:{type:Date}, status:{type:String,default:""}, ip:{type:String,default:""}
-}));
-const Message = mongoose.model("Message", new mongoose.Schema({
-  room:String, sender:String, senderRank:String, text:String,
-  time:{type:Date,default:Date.now}
-}));
-const Log = mongoose.model("Log", new mongoose.Schema({
-  admin:String,target:String,action:String,reason:String,time:{type:Date,default:Date.now}
-}));
-const Store = mongoose.model("Store", new mongoose.Schema({
-  item:String,price:Number
-}));
-const News = mongoose.model("News", new mongoose.Schema({
-  admin:String, text:String, time:{type:Date,default:Date.now}
-}));
-
-// رفع الصور
-const upload = multer({dest:'uploads/'});
-app.post('/upload', upload.single('file'), (req,res)=>{
-  res.json({url:`/uploads/${req.file.filename}`});
+// رفع الملفات
+const storage = multer.diskStorage({
+  destination: 'uploads/',
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
+const upload = multer({ storage });
 
-// الصفحة الرئيسية - عشان ما يطلع Cannot GET /
-app.get('/', (req,res)=>{
-  res.send(`
-    <!DOCTYPE html>
-    <html dir="rtl" lang="ar">
-    <head><meta charset="UTF-8"><title>YemenChat</title>
-    <style>body{background:#111;color:#0f0;font-family:tahoma;text-align:center;padding:50px}</style>
-    </head>
-    <body>
-      <h1>✅ سيرفر YemenChat شغال</h1>
-      <p>المونغو متصل والـ API جاهز</p>
-      <p>ارفع ملفات الواجهة في مجلد public عشان يشتغل الموقع</p>
-    </body>
-    </html>
-  `)
-})
-
-// API
-app.post('/login', async (req,res)=>{
-  let user = await User.findOne({name:req.body.name});
-  if(!user) user = await User.create(req.body);
+// ===== API =====
+app.post('/register', (req, res) => {
+  let user = { ...req.body, id: Date.now() };
+  users.push(user);
   res.json(user);
 });
 
-app.post('/logout', async (req,res)=>{
-  if(req.body.rank=='visitor') await User.deleteOne({name:req.body.name});
-  res.json({ok:1});
+app.post('/login', (req, res) => {
+  let user = users.find(u => u.name == req.body.name && u.pass == req.body.pass);
+  if (!user) return res.status(404).json({ error: "خطأ في الاسم او الباسورد" });
+  res.json(user);
 });
 
-app.post('/user/update', async (req,res)=>{
-  await User.updateOne({name:req.body.name},{$set:{theme:req.body.theme}});
-  res.json({ok:1});
+app.get('/msgs/:room', (req, res) => {
+  res.json(msgs[req.params.room] || []);
 });
 
-app.get('/msgs/:room', async (req,res)=> res.json(await Message.find({room:req.params.room}).limit(100)));
-app.get('/logs', async (req,res)=> res.json(await Log.find().sort({_id:-1}).limit(50)));
-app.get('/store', async (req,res)=> res.json(await Store.find()));
-app.get('/news', async (req,res)=> res.json(await News.find().sort({_id:-1}).limit(10)));
-app.get('/user/:name', async (req,res)=> res.json(await User.findOne({name:req.params.name})));
-app.get('/friends-wall/:me', async (req,res)=>{
-  let me = await User.findOne({name:req.params.me});
-  res.json(await Message.find({sender:{$in:me.friends}}).sort({_id:-1}).limit(20));
+app.post('/upload', upload.single('file'), (req, res) => {
+  res.json({ url: '/uploads/' + req.file.filename });
 });
-app.post('/store', async (req,res)=>{ await Store.updateOne({item:req.body.item},{$set:{price:req.body.price}},{upsert:true}); res.json({ok:1}) });
-app.post('/friend/add', async (req,res)=>{ await User.updateOne({name:req.body.me},{$addToSet:{friends:req.body.target}}); res.json({ok:1}) });
-app.post('/like', async (req,res)=>{ let u=await User.findOne({name:req.body.target}); if(u.likes.includes(req.body.me)) return res.json({msg:"لايك واحد فقط"}); await User.updateOne({name:req.body.target},{$addToSet:{likes:req.body.me}}); res.json({ok:1}) });
-app.post('/news', async (req,res)=>{
-  if(!['admin','owner'].includes(req.body.rank)) return res.status(403).send();
-  await News.create({admin:req.body.admin, text:req.body.text});
+
+app.get('/users', (req, res) => {
+  res.json(users);
+});
+
+app.get('/news', (req, res) => {
+  res.json(news);
+});
+
+app.post('/news', (req, res) => {
+  news.unshift(req.body);
   io.emit('newNews', req.body.text);
-  res.json({ok:1});
+  res.json({ ok: true });
 });
 
-// سوكت
-io.on('connection', (socket)=>{
-  socket.on('joinRoom', (room)=> socket.join(room));
-  socket.on('sendMsg', async (data)=>{
-    let msg = await Message.create(data);
-    io.to(data.room).emit('newMsg', msg);
-    await User.updateOne({name:data.sender},{$inc:{coins:1}});
+app.get('/friends-wall', (req, res) => {
+  res.json(friendsWall);
+});
+
+app.post('/friends-wall', (req, res) => {
+  friendsWall.unshift(req.body);
+  res.json({ ok: true });
+});
+
+app.get('/logs', (req, res) => {
+  res.json(logs);
+});
+
+app.get('/store', (req, res) => {
+  res.json([
+    { item: 'مميز', price: 500 },
+    { item: 'مشرف', price: 1000 }
+  ]);
+});
+
+app.post('/logout', (req, res) => {
+  users = users.filter(u => u.name != req.body.name);
+  res.json({ ok: true });
+});
+
+// ===== SOCKET =====
+io.on('connection', (socket) => {
+  
+  socket.on('join', (user) => {
+    socket.user = user;
+    if (!users.find(u => u.name == user.name)) users.push(user);
+    io.emit('usersUpdate', users);
   });
-  socket.on('mute', async (data)=>{
-    await User.updateOne({name:data.name},{$set:{mutedUntil:new Date(Date.now()+data.min*60000)}});
-    await Log.create({admin:data.by,target:data.name,action:"كتم",reason:data.reason});
-    io.emit('system', `[ تم كتم ${data.name} ${data.min} دقيقة ]`);
+
+  socket.on('joinRoom', (room) => {
+    socket.join(room);
+  });
+
+  socket.on('sendMsg', (msg) => {
+    if (!msgs[msg.room]) msgs[msg.room] = [];
+    msgs[msg.room].push(msg);
+    if (msgs[msg.room].length > 100) msgs[msg.room].shift(); // يحفظ اخر 100 رسالة بس
+    io.to(msg.room).emit('newMsg', msg);
+  });
+
+  socket.on('system', (txt) => {
+    io.emit('system', txt);
+  });
+
+  socket.on('pm', (data) => {
+    io.emit('pm', data); // يرسل للكل والفرونت يفلتر
+  });
+
+  socket.on('like', (data) => {
+    io.emit('like', data);
+    let user = users.find(u => u.name == data.to);
+    if (user) user.likes = (user.likes || 0) + 1;
+  });
+
+  socket.on('mute', (data) => {
+    logs.push({ time: Date.now(), admin: socket.user?.name, action: 'كتم', target: data.name });
+    io.emit('mute', data);
+  });
+
+  socket.on('kick', (data) => {
+    logs.push({ time: Date.now(), admin: socket.user?.name, action: 'طرد', target: data.name });
+    io.emit('system', `تم طرد ${data.name} لمدة ${data.min} دقائق`);
+  });
+
+  socket.on('autoMute', (data) => {
+    logs.push({ time: Date.now(), admin: 'النظام الآلي', action: 'كتم تلقائي', target: data.name });
+    io.emit('mute', data);
+  });
+
+  socket.on('disconnect', () => {
+    users = users.filter(u => u.name != socket.user?.name);
+    io.emit('usersUpdate', users);
   });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT,()=>console.log("Server on "+PORT));
+server.listen(PORT, () => console.log(`السيرفر شغال على ${PORT}`));
