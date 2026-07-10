@@ -4,11 +4,12 @@
   "description": "شات اليمن المطور",
   "main": "server.js",
   "scripts": { "start": "node server.js" },
+  "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
     "mongoose": "^8.0.0",
     "cors": "^2.8.5",
     "socket.io": "^4.7.2",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^2.1.1"
   }
 }
