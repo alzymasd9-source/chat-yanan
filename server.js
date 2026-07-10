@@ -18,22 +18,14 @@ app.use('/uploads', express.static('uploads'));
 // ربط مونغو
 mongoose.connect(process.env.MONGO_URL || "mongodb://localhost:27017/yemenchat");
 
-// الجداول - تم تصحيح انواع الحقول
+// الجداول
 const User = mongoose.model("User", new mongoose.Schema({
-  name:String,
-  pass:String,
-  rank:{type:String,default:"visitor"},
-  coins:{type:Number,default:0},
-  gender:{type:String,default:""},
-  avatar:{type:String,default:""},
-  wall:{type:String,default:""},
-  pmSetting:{type:Number,default:1},
-  friends:{type:[String],default:[]},
-  likes:{type:[String],default:[]},
-  theme:{type:String,default:"dark"},
-  mutedUntil:{type:Date},
-  status:{type:String,default:""},
-  ip:{type:String,default:""}
+  name:String, pass:String, rank:{type:String,default:"visitor"},
+  coins:{type:Number,default:0}, gender:{type:String,default:""},
+  avatar:{type:String,default:""}, wall:{type:String,default:""},
+  pmSetting:{type:Number,default:1}, friends:{type:[String],default:[]},
+  likes:{type:[String],default:[]}, theme:{type:String,default:"dark"},
+  mutedUntil:{type:Date}, status:{type:String,default:""}, ip:{type:String,default:""}
 }));
 const Message = mongoose.model("Message", new mongoose.Schema({
   room:String, sender:String, senderRank:String, text:String,
@@ -61,13 +53,17 @@ app.post('/login', async (req,res)=>{
   if(!user) user = await User.create(req.body);
   res.json(user);
 });
+
 app.post('/logout', async (req,res)=>{
   if(req.body.rank=='visitor') await User.deleteOne({name:req.body.name});
   res.json({ok:1});
+}); // <-- هذا القوس كان ناقص
+
 app.post('/user/update', async (req,res)=>{
   await User.updateOne({name:req.body.name},{$set:{theme:req.body.theme}});
   res.json({ok:1});
 });
+
 app.get('/msgs/:room', async (req,res)=> res.json(await Message.find({room:req.params.room}).limit(100)));
 app.get('/logs', async (req,res)=> res.json(await Log.find().sort({_id:-1}).limit(50)));
 app.get('/store', async (req,res)=> res.json(await Store.find()));
