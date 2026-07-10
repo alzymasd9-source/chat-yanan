@@ -5,6 +5,7 @@ const http = require('http');
 const { Server } = require("socket.io");
 const multer = require('multer');
 const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -12,11 +13,18 @@ const io = new Server(server, { cors:{origin:"*"} });
 
 app.use(express.json());
 app.use(cors());
+
+// انشاء مجلد uploads لو مش موجود
 if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
 app.use('/uploads', express.static('uploads'));
 
+// عشان يقرا ملفات الواجهة لو حطيتها في public
+app.use(express.static(path.join(__dirname, 'public')));
+
 // ربط مونغو
-mongoose.connect(process.env.MONGO_URL || "mongodb://localhost:27017/yemenchat");
+mongoose.connect(process.env.MONGO_URL || "mongodb://localhost:27017/yemenchat")
+.then(()=> console.log("✅ متصل بقاعدة البيانات"))
+.catch(err=> console.log("❌ خطأ المونغو:", err));
 
 // الجداول
 const User = mongoose.model("User", new mongoose.Schema({
@@ -47,6 +55,23 @@ app.post('/upload', upload.single('file'), (req,res)=>{
   res.json({url:`/uploads/${req.file.filename}`});
 });
 
+// الصفحة الرئيسية - عشان ما يطلع Cannot GET /
+app.get('/', (req,res)=>{
+  res.send(`
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head><meta charset="UTF-8"><title>YemenChat</title>
+    <style>body{background:#111;color:#0f0;font-family:tahoma;text-align:center;padding:50px}</style>
+    </head>
+    <body>
+      <h1>✅ سيرفر YemenChat شغال</h1>
+      <p>المونغو متصل والـ API جاهز</p>
+      <p>ارفع ملفات الواجهة في مجلد public عشان يشتغل الموقع</p>
+    </body>
+    </html>
+  `)
+})
+
 // API
 app.post('/login', async (req,res)=>{
   let user = await User.findOne({name:req.body.name});
@@ -57,7 +82,7 @@ app.post('/login', async (req,res)=>{
 app.post('/logout', async (req,res)=>{
   if(req.body.rank=='visitor') await User.deleteOne({name:req.body.name});
   res.json({ok:1});
-}); // <-- هذا القوس كان ناقص
+});
 
 app.post('/user/update', async (req,res)=>{
   await User.updateOne({name:req.body.name},{$set:{theme:req.body.theme}});
