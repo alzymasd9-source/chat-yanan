@@ -45,7 +45,6 @@ body{background:var(--bg);color:var(--text);transition:0.3s}
 .profile-wall{height:120px;background:#333;background-size:cover;position:relative}
 .profile-wall img{width:100%;height:100%;object-fit:cover}
 .rank-visitor{color:#AAA}.rank-member{color:#4CAF50}.rank-vip{color:#FFD700}.rank-mod{color:#2196F3}.rank-admin{color:#FF5722}.rank-owner{color:#E91E63}
-.badge{background:#FF5722;color:#fff;border-radius:50%;padding:2px 6px;font-size:10px}
 .radio-bar{padding:8px;background:#222;display:flex;align-items:center;gap:10px}
 </style>
 </head>
@@ -59,68 +58,21 @@ body{background:var(--bg);color:var(--text);transition:0.3s}
   <div class="card"><h3>3. تسجيل عضوية جديدة</h3><input class="input" id="regName" placeholder="الاسم"><input class="input" id="regPass" type="password" placeholder="كلمة السر"><input class="input" id="regEmail" placeholder="البريد يقبل الوهمي"><select class="input" id="regGender"><option value="male">ذكر</option><option value="female">أنثى</option><option value="other">آخر</option></select><input class="input" id="regAge" type="number" placeholder="العمر"><button class="btn" onclick="register()">انشاء حساب</button></div>
 </div>
 
-<!-- صفحة الغرف -->
-<div id="roomsPage" class="page">
-  <div class="header"><span>قائمة الغرف</span><div><button class="icon-btn" onclick="openProfile()">👤</button><button class="icon-btn" onclick="logout()">🚪</button></div></div>
-  <div id="roomsList" style="padding:10px"></div>
-  <div class="card"><button class="btn" onclick="openStore()">🛒 المتجر</button><button class="btn" onclick="openNews()">📰 الأخبار</button><button class="btn" onclick="openFriendsWall()">👥 حائط الأصدقاء</button><button class="btn" onclick="toggleTheme()">🌙 تبديل الثيم</button><button id="adminBtn" class="btn" style="display:none;background:#FF5722" onclick="openAdmin()">⚙️ لوحة التحكم</button></div>
-</div>
-
-<!-- صفحة الشات -->
-<div id="chatPage" class="page">
-  <div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span id="roomName"></span><button class="icon-btn" onclick="toggleUsers()">👥</button></div>
-
-  <div class="radio-bar">
-    <button class="icon-btn" id="playBtn" onclick="toggleRadio()">▶️</button>
-    <span>🔊 <span id="radioName">إذاعة اليمن</span></span>
-    <audio id="radioPlayer" src="https://stream.zeno.fm/0r0a792kwz8uv" style="display:none"></audio>
-  </div>
-
-  <div class="chat" id="chatBox"></div>
-  <div class="input-bar"><button class="icon-btn" id="uploadBtn" onclick="uploadImg()">+</button><button class="icon-btn" id="youtubeBtn" onclick="sendYoutube()">▶️</button><button class="icon-btn" id="micBtn" onmousedown="startRecord()" onmouseup="stopRecord()">🎤</button><input id="msgInput" class="input" placeholder="اكتب هنا..."><button class="icon-btn" onclick="sendMsg()">✈️</button></div>
-  <div class="bottom-bar">
-    <button class="icon-btn" onclick="goRooms()">🏠</button>
-    <button class="icon-btn" onclick="toggleUsers()">👥</button>
-    <button class="icon-btn" onclick="openSettings()">⚙️</button>
-  </div>
-</div>
-
-<!-- الملف الشخصي -->
-<div id="profilePage" class="page">
-  <div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span>الملف الشخصي</span></div>
-  <div class="profile-wall"><img id="wallImg"><button class="btn" style="position:absolute;bottom:5px;right:5px;width:auto" onclick="uploadWall()">تغيير الحائط</button></div>
-  <div class="card" style="text-align:center;margin-top:-30px"><img id="profileAvatar" class="avatar" style="width:80px;height:80px;border:3px solid #fff"><button class="btn" style="width:auto" onclick="uploadAvatar()">تغيير الصورة</button><h3 id="profileName"></h3><p id="profileRank"></p><p><span id="profileCoins">0</span>💲 | <span id="profileLikes">0</span>❤️</p></div>
-  <div class="card"><h4>التخصيص - للمميز وفوق</h4><input class="input" id="nameColor" type="color"><input class="input" id="textColor" type="color"><select class="input" id="fontSize"><option>14px</option><option>16px</option><option>18px</option></select><button class="btn" onclick="saveCustom()">حفظ التخصيص</button></div>
-  <div class="card"><h4>إعدادات الخاص</h4><select class="input" id="pmSetting"><option value="all">للجميع</option><option value="members">للأعضاء فقط</option><option value="friends">للأصدقاء فقط</option><option value="off">إيقاف عن الكل</option></select><button class="btn" onclick="savePmSetting()">حفظ</button></div>
-</div>
-
-<!-- حائط الأصدقاء -->
+<!-- باقي الصفحات نفسها -->
+<div id="roomsPage" class="page"><div class="header"><span>قائمة الغرف</span><div><button class="icon-btn" onclick="openProfile()">👤</button><button class="icon-btn" onclick="logout()">🚪</button></div></div><div id="roomsList" style="padding:10px"></div><div class="card"><button class="btn" onclick="openStore()">🛒 المتجر</button><button class="btn" onclick="openNews()">📰 الأخبار</button><button class="btn" onclick="openFriendsWall()">👥 حائط الأصدقاء</button><button class="btn" onclick="toggleTheme()">🌙 تبديل الثيم</button><button id="adminBtn" class="btn" style="display:none;background:#FF5722" onclick="openAdmin()">⚙️ لوحة التحكم</button></div></div>
+<div id="chatPage" class="page"><div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span id="roomName"></span><button class="icon-btn" onclick="toggleUsers()">👥</button></div><div class="radio-bar"><button class="icon-btn" id="playBtn" onclick="toggleRadio()">▶️</button><span>🔊 <span id="radioName">إذاعة اليمن</span></span><audio id="radioPlayer" src="https://stream.zeno.fm/0r0a792kwz8uv" style="display:none"></audio></div><div class="chat" id="chatBox"></div><div class="input-bar"><button class="icon-btn" id="uploadBtn" onclick="uploadImg()">+</button><button class="icon-btn" id="youtubeBtn" onclick="sendYoutube()">▶️</button><button class="icon-btn" id="micBtn" onmousedown="startRecord()" onmouseup="stopRecord()">🎤</button><input id="msgInput" class="input" placeholder="اكتب هنا..."><button class="icon-btn" onclick="sendMsg()">✈️</button></div><div class="bottom-bar"><button class="icon-btn" onclick="goRooms()">🏠</button><button class="icon-btn" onclick="toggleUsers()">👥</button><button class="icon-btn" onclick="openSettings()">⚙️</button></div></div>
+<div id="profilePage" class="page"><div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span>الملف الشخصي</span></div><div class="profile-wall"><img id="wallImg"><button class="btn" style="position:absolute;bottom:5px;right:5px;width:auto" onclick="uploadWall()">تغيير الحائط</button></div><div class="card" style="text-align:center;margin-top:-30px"><img id="profileAvatar" class="avatar" style="width:80px;height:80px;border:3px solid #fff"><button class="btn" style="width:auto" onclick="uploadAvatar()">تغيير الصورة</button><h3 id="profileName"></h3><p id="profileRank"></p><p><span id="profileCoins">0</span>💲 | <span id="profileLikes">0</span>❤️</p></div><div class="card"><h4>التخصيص - للمميز وفوق</h4><input class="input" id="nameColor" type="color"><input class="input" id="textColor" type="color"><select class="input" id="fontSize"><option>14px</option><option>16px</option><option>18px</option></select><button class="btn" onclick="saveCustom()">حفظ التخصيص</button></div><div class="card"><h4>إعدادات الخاص</h4><select class="input" id="pmSetting"><option value="all">للجميع</option><option value="members">للأعضاء فقط</option><option value="friends">للأصدقاء فقط</option><option value="off">إيقاف عن الكل</option></select><button class="btn" onclick="savePmSetting()">حفظ</button></div></div>
 <div id="friendsPage" class="page"><div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span>حائط الأصدقاء</span></div><div id="friendsWall" style="padding:10px"></div><div class="input-bar"><input id="wallInput" class="input" placeholder="اكتب منشور..."><button class="btn" style="width:auto" onclick="postWall()">نشر</button></div></div>
-
-<!-- المتجر -->
 <div id="storePage" class="page"><div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span>المتجر 🛒</span></div><div id="storeList" style="padding:10px"></div></div>
-
-<!-- الاخبار -->
 <div id="newsPage" class="page"><div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span>الأخبار</span></div><div id="newsList" style="padding:10px"></div><div id="newsAdmin" class="card" style="display:none"><input class="input" id="newsInput" placeholder="اكتب الخبر"><button class="btn" onclick="postNews()">نشر</button></div></div>
-
-<!-- لوحة الادارة -->
-<div id="adminPage" class="page"><div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span>لوحة التحكم</span></div>
-  <div class="card"><h4>النظام الآلي</h4><textarea class="input" id="badWordsList" rows="3" placeholder="كلمات ممنوعة مفصولة بفاصلة"></textarea><button class="btn" onclick="saveAutoMod()">حفظ الكلمات</button></div>
-  <div class="card"><h4>مراقبين الغرف</h4><input class="input" id="roomModName" placeholder="اسم العضو"><select class="input" id="roomModRoom"><option>العامة</option><option>اليمن</option><option>الجزائر</option><option>مصر</option></select><button class="btn" onclick="addRoomMod()">تعيين مشرف غرفة</button></div>
-  <div id="adminLogs" class="card"></div>
-</div>
-
-<!-- قائمة المتواجدين -->
+<div id="adminPage" class="page"><div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span>لوحة التحكم</span></div><div class="card"><h4>النظام الآلي</h4><textarea class="input" id="badWordsList" rows="3" placeholder="كلمات ممنوعة مفصولة بفاصلة"></textarea><button class="btn" onclick="saveAutoMod()">حفظ الكلمات</button></div><div class="card"><h4>مراقبين الغرف</h4><input class="input" id="roomModName" placeholder="اسم العضو"><select class="input" id="roomModRoom"><option>العامة</option><option>اليمن</option><option>الجزائر</option><option>مصر</option></select><button class="btn" onclick="addRoomMod()">تعيين مشرف غرفة</button></div><div id="adminLogs" class="card"></div></div>
 <div id="usersList" class="users-list"><div class="header"><span>المتواجدين <span id="usersCount">0</span></span><button class="icon-btn" onclick="toggleUsers()">X</button></div><div id="usersBox"></div></div>
-
-<!-- بوكس الضغط على الاسم -->
 <div id="userPopup" class="popup"><div style="text-align:center"><div id="popupAvatar" class="avatar" style="width:60px;height:60px;margin:auto"></div><h3 id="popupName"></h3><p id="popupInfo"></p></div><button class="btn" onclick="openPM()">💬 رسالة خاصة</button><button class="btn btn2" onclick="likeUser()">❤️ لايك <span id="likeCount">0</span></button><button id="popupAdminBtn" class="btn" style="display:none;background:#FF5722" onclick="adminActions()">⚡ الأمر</button><button class="btn btn2" onclick="closePopup()">اغلاق</button></div>
-
-<!-- نافذة الخاص -->
 <div id="pmWindow" class="pm-window"><div class="pm-header"><span id="pmName"></span><button class="icon-btn" onclick="closePM()">X</button></div><div class="pm-chat" id="pmChat"></div><div class="input-bar"><input id="pmInput" class="input"><button class="icon-btn" onclick="sendPM()">✈️</button></div></div>
 
 <script>
-const API = "https://chat-yanan-1.onrender.com";
+// ===== الربط التلقائي =====
+const API = window.location.origin;
 const socket = io(API);
 let currentUser={}, currentRoom='العامة', selectedGender='male', selectedUser=null, pmUser=null;
 let mutedUsers=[], likedUsers=[], mediaRecorder, audioChunks=[], roomMods={}, badWords=['كلمة1','كلمة2','سب'];
@@ -138,68 +90,18 @@ async function register(){let data={name:document.getElementById('regName').valu
 function goRooms(){showPage('roomsPage');loadRooms();if(['admin','owner'].includes(currentUser.rank))document.getElementById('adminBtn').style.display='block';}
 function loadRooms(){let rooms=['العامة','اليمن','الجزائر','مصر'];document.getElementById('roomsList').innerHTML=rooms.map(r=>`<div class="room"><div>🌎 غرفة ${r} 🌎 ${roomMods[r]?'<span style="color:#2196F3">[مشرف: '+roomMods[r]+']</span>':''}</div><button class="btn" onclick="enterRoom('${r}')">اضغط هنا للدخول</button></div>`).join('');}
 function enterRoom(room){currentRoom=room;socket.emit('joinRoom',room);showPage('chatPage');document.getElementById('roomName').innerText=room;document.getElementById('chatBox').innerHTML="";socket.emit('system',`انضم للغرفة ${currentUser.name} هلا وسهلا`);loadMsgs(room);updateButtons();}
-
-function updateButtons(){
-  let isMod = roomMods[currentRoom]==currentUser.name;
-  if(['visitor','member'].includes(currentUser.rank) &&!isMod){
-    document.getElementById('uploadBtn').style.display='none';
-    document.getElementById('youtubeBtn').style.display='none';
-  } else {
-    document.getElementById('uploadBtn').style.display='block';
-    document.getElementById('youtubeBtn').style.display='block';
-  }
-}
-
-// الراديو
+function updateButtons(){let isMod = roomMods[currentRoom]==currentUser.name;if(['visitor','member'].includes(currentUser.rank) &&!isMod){document.getElementById('uploadBtn').style.display='none';document.getElementById('youtubeBtn').style.display='none';} else {document.getElementById('uploadBtn').style.display='block';document.getElementById('youtubeBtn').style.display='block';}}
 function toggleRadio(){let player=document.getElementById('radioPlayer');let btn=document.getElementById('playBtn');if(player.paused){player.play();btn.innerText='⏸️';}else{player.pause();btn.innerText='▶️';}}
 
-socket.on('newMsg', (msg)=>{
-  if(msg.room!=currentRoom) return;
-  if(mutedUsers.includes(msg.sender)) return;
-  let time=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) + ' + new Date().toLocaleDateString('ar-EG');
-  let genderClass = msg.gender||'male';
-  let style = `color:${msg.color||'#fff'};font-size:${msg.size||'14px'}`;
-  document.getElementById('chatBox').innerHTML+=`<div class="msg" onclick="showUserPopup('${msg.sender}','${msg.senderRank}','${msg.gender}')"><div class="avatar ${genderClass}"></div><div class="msg-content"><div class="msg-name ${ranks[msg.senderRank]?.class}" style="color:${msg.nameColor||''}">${ranks[msg.senderRank]?.emoji} ${msg.sender}</div><div class="msg-text" style="${style}">${msg.text}</div><div class="time">${time}</div></div></div>`;
-  document.getElementById('chatBox').scrollTop=99999;
-  if(msg.sender==currentUser.name) addCoins(2);
-});
-
+socket.on('newMsg', (msg)=>{if(msg.room!=currentRoom) return;if(mutedUsers.includes(msg.sender)) return;let time=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) + ' + new Date().toLocaleDateString('ar-EG');let genderClass = msg.gender||'male';let style = `color:${msg.color||'#fff'};font-size:${msg.size||'14px'}`;document.getElementById('chatBox').innerHTML+=`<div class="msg" onclick="showUserPopup('${msg.sender}','${msg.senderRank}','${msg.gender}')"><div class="avatar ${genderClass}"></div><div class="msg-content"><div class="msg-name ${ranks[msg.senderRank]?.class}" style="color:${msg.nameColor||''}">${ranks[msg.senderRank]?.emoji} ${msg.sender}</div><div class="msg-text" style="${style}">${msg.text}</div><div class="time">${time}</div></div></div>`;document.getElementById('chatBox').scrollTop=99999;if(msg.sender==currentUser.name) addCoins(2);});
 socket.on('system', (txt)=>{document.getElementById('chatBox').innerHTML+=`<div class="system">[ ${txt} ]</div>`;});
 socket.on('mute', (data)=>{if(data.name==currentUser.name){mutedUsers.push(data.name);setTimeout(()=>mutedUsers=mutedUsers.filter(x=>x!=data.name),data.min*60000);alert(`تم كتمك ${data.min} دقائق`);}});
 
 async function loadMsgs(room){let res=await fetch(API+`/msgs/${room}`);(await res.json()).forEach(m=>socket.emit('newMsg',m));}
+function checkAutoMod(text){if(badWords.some(w=>text.includes(w))){socket.emit('autoMute',{name:currentUser.name,min:10});return false;}return true;}
+function sendMsg(){let txt=document.getElementById('msgInput').value;if(!txt) return;if(!checkAutoMod(txt)) return alert("تم كتمك تلقائي بسبب مخالفة");txt=txt.replace(/\*\*\*(.*?)\*\*/g,'<b>$1</b>');socket.emit('sendMsg',{room:currentRoom,sender:currentUser.name,senderRank:currentUser.rank,gender:currentUser.gender,text:txt,color:currentUser.custom?.textColor,size:currentUser.custom?.fontSize,nameColor:currentUser.custom?.nameColor});document.getElementById('msgInput').value="";}
 
-function checkAutoMod(text){
-  if(badWords.some(w=>text.includes(w))){
-    socket.emit('autoMute',{name:currentUser.name,min:10});
-    return false;
-  }
-  return true;
-}
-
-function sendMsg(){
-  let txt=document.getElementById('msgInput').value;
-  if(!txt) return;
-  if(!checkAutoMod(txt)) return alert("تم كتمك تلقائي بسبب مخالفة");
-  txt=txt.replace(/\*\*\*(.*?)\*\*\*/g,'<b>$1</b>');
-  socket.emit('sendMsg',{room:currentRoom,sender:currentUser.name,senderRank:currentUser.rank,gender:currentUser.gender,text:txt,color:currentUser.custom?.textColor,size:currentUser.custom?.fontSize,nameColor:currentUser.custom?.nameColor});
-  document.getElementById('msgInput').value="";
-}
-
-async function startRecord(){
-  document.getElementById('micBtn').classList.add('recording');
-  let stream = await navigator.mediaDevices.getUserMedia({audio:true});
-  mediaRecorder = new MediaRecorder(stream);
-  mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-  mediaRecorder.onstop = async () => {
-    let blob = new Blob(audioChunks);
-    let f = new FormData(); f.append('file', blob, 'voice.mp3');
-    let r = await fetch(API+'/upload',{method:"POST",body:f});
-    let d = await r.json();
-    sendMsg(`<audio controls src="${API+d.url}"></audio>`);
-  };
-  mediaRecorder.start();
-}
+async function startRecord(){document.getElementById('micBtn').classList.add('recording');let stream = await navigator.mediaDevices.getUserMedia({audio:true});mediaRecorder = new MediaRecorder(stream);mediaRecorder.ondataavailable = e => audioChunks.push(e.data);mediaRecorder.onstop = async () => {let blob = new Blob(audioChunks);let f = new FormData(); f.append('file', blob, 'voice.mp3');let r = await fetch(API+'/upload',{method:"POST",body:f});let d = await r.json();sendMsg(`<audio controls src="${API+d.url}"></audio>`);};mediaRecorder.start();}
 function stopRecord(){document.getElementById('micBtn').classList.remove('recording');mediaRecorder.stop();}
 
 function uploadImg(){let isMod = roomMods[currentRoom]==currentUser.name;if(['visitor','member'].includes(currentUser.rank) &&!isMod) return alert("للمميز وما فوق فقط");let i=document.createElement('input');i.type='file';i.onchange=async e=>{let f=new FormData();f.append('file',e.target.files[0]);let r=await fetch(API+'/upload',{method:"POST",body:f});let d=await r.json();sendMsg(`<img src="${API+d.url}" style="max-width:200px;border-radius:10px">`)};i.click();}
@@ -211,4 +113,7 @@ function getRankLevel(r){return {owner:7,admin:6,mod:5,vip:4,member:3,visitor:2}
 
 function showUserPopup(name,rank,gender){selectedUser={name,rank,gender};document.getElementById('popupName').innerText=name;document.getElementById('popupInfo').innerText=`${randomAge()} سنة ${gender=='male'?'ذكر':'أنثى'}`;document.getElementById('popupAvatar').className=`avatar ${gender}`;document.getElementById('likeCount').innerText=currentUser.likes||0;if(['admin','owner','mod'].includes(currentUser.rank) || roomMods[currentRoom]==currentUser.name)document.getElementById('popupAdminBtn').style.display='block';document.getElementById('userPopup').style.display='block';}
 function closePopup(){document.getElementById('userPopup').style.display='none';}
-function openPM(){if(currentUser.pm=='off') return alert("انت موقف الخاص");pmUser=selectedUser.name;document.get
+function openPM(){if(currentUser.pm=='off') return alert("انت موقف الخاص");pmUser=selectedUser.name;document.getElementById('pmName').innerText=pmUser;document.getElementById('pmWindow').style.display='flex';closePopup();}
+function closePM(){document.getElementById('pmWindow').style.display='none';}
+function sendPM(){let txt=document.getElementById('pmInput').value;if(!txt)return;socket.emit('pm',{to:pmUser,from:currentUser.name,text:txt});document.getElementById('pmChat').innerHTML+=`<div style="text-align:right"><b>أنا:</b> ${txt}</div>`;document.getElementById('pmInput').value="";}
+socket.on('pm',(data)=>{if(data.to==curr
