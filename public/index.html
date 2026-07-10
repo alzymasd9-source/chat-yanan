@@ -32,6 +32,9 @@ body{background:var(--bg);color:var(--text);transition:0.3s}
 .system{text-align:center;color:#888;font-size:12px;margin:5px 0}
 .input-bar{display:flex;gap:5px;padding:10px;background:var(--card)}
 .icon-btn{background:none;border:none;color:var(--primary);font-size:20px;cursor:pointer}
+.icon-btn.recording{color:red;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:0.5}}
+.bottom-bar{display:flex;justify-content:space-around;padding:8px;background:var(--card);border-top:1px solid #333}
 .users-list{position:fixed;right:0;top:0;bottom:0;width:280px;background:var(--card);transform:translateX(100%);transition:0.3s;z-index:99;overflow-y:auto}
 .users-list.show{transform:translateX(0)}
 .user-item{padding:10px;border-bottom:1px solid #333;cursor:pointer;display:flex;gap:8px;align-items:center}
@@ -39,8 +42,11 @@ body{background:var(--bg);color:var(--text);transition:0.3s}
 .pm-window{position:fixed;bottom:0;right:10px;width:300px;height:400px;background:var(--card);border-radius:10px 10px 0 0;display:none;flex-direction:column;z-index:998}
 .pm-header{padding:10px;background:var(--primary);color:#000;font-weight:bold;display:flex;justify-content:space-between}
 .pm-chat{flex:1;overflow-y:auto;padding:10px}
+.profile-wall{height:120px;background:#333;background-size:cover;position:relative}
+.profile-wall img{width:100%;height:100%;object-fit:cover}
 .rank-visitor{color:#AAA}.rank-member{color:#4CAF50}.rank-vip{color:#FFD700}.rank-mod{color:#2196F3}.rank-admin{color:#FF5722}.rank-owner{color:#E91E63}
 .badge{background:#FF5722;color:#fff;border-radius:50%;padding:2px 6px;font-size:10px}
+.radio-bar{padding:8px;background:#222;display:flex;align-items:center;gap:10px}
 </style>
 </head>
 <body class="dark">
@@ -57,22 +63,39 @@ body{background:var(--bg);color:var(--text);transition:0.3s}
 <div id="roomsPage" class="page">
   <div class="header"><span>قائمة الغرف</span><div><button class="icon-btn" onclick="openProfile()">👤</button><button class="icon-btn" onclick="logout()">🚪</button></div></div>
   <div id="roomsList" style="padding:10px"></div>
-  <div class="card"><button class="btn" onclick="openStore()">🛒 المتجر</button><button class="btn" onclick="openNews()">📰 الأخبار</button><button class="btn" onclick="toggleTheme()">🌙 تبديل الثيم</button><button id="adminBtn" class="btn" style="display:none;background:#FF5722" onclick="openAdmin()">⚙️ لوحة التحكم</button></div>
+  <div class="card"><button class="btn" onclick="openStore()">🛒 المتجر</button><button class="btn" onclick="openNews()">📰 الأخبار</button><button class="btn" onclick="openFriendsWall()">👥 حائط الأصدقاء</button><button class="btn" onclick="toggleTheme()">🌙 تبديل الثيم</button><button id="adminBtn" class="btn" style="display:none;background:#FF5722" onclick="openAdmin()">⚙️ لوحة التحكم</button></div>
 </div>
 
 <!-- صفحة الشات -->
 <div id="chatPage" class="page">
   <div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span id="roomName"></span><button class="icon-btn" onclick="toggleUsers()">👥</button></div>
+
+  <div class="radio-bar">
+    <button class="icon-btn" id="playBtn" onclick="toggleRadio()">▶️</button>
+    <span>🔊 <span id="radioName">إذاعة اليمن</span></span>
+    <audio id="radioPlayer" src="https://stream.zeno.fm/0r0a792kwz8uv" style="display:none"></audio>
+  </div>
+
   <div class="chat" id="chatBox"></div>
-  <div class="input-bar"><button class="icon-btn" id="uploadBtn" onclick="uploadImg()">+</button><button class="icon-btn" id="youtubeBtn" onclick="sendYoutube()">▶️</button><button class="icon-btn" onclick="recordVoice()">🎤</button><input id="msgInput" class="input" placeholder="اكتب هنا..."><button class="icon-btn" onclick="sendMsg()">✈️</button></div>
+  <div class="input-bar"><button class="icon-btn" id="uploadBtn" onclick="uploadImg()">+</button><button class="icon-btn" id="youtubeBtn" onclick="sendYoutube()">▶️</button><button class="icon-btn" id="micBtn" onmousedown="startRecord()" onmouseup="stopRecord()">🎤</button><input id="msgInput" class="input" placeholder="اكتب هنا..."><button class="icon-btn" onclick="sendMsg()">✈️</button></div>
+  <div class="bottom-bar">
+    <button class="icon-btn" onclick="goRooms()">🏠</button>
+    <button class="icon-btn" onclick="toggleUsers()">👥</button>
+    <button class="icon-btn" onclick="openSettings()">⚙️</button>
+  </div>
 </div>
 
 <!-- الملف الشخصي -->
 <div id="profilePage" class="page">
   <div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span>الملف الشخصي</span></div>
-  <div class="card" style="text-align:center"><h3 id="profileName"></h3><p id="profileRank"></p><p><span id="profileCoins">0</span>💲 | <span id="profileLikes">0</span>❤️</p></div>
-  <div class="card"><h4>الإعدادات</h4><button class="btn" onclick="changePassword()">تغيير الباسورد</button><button class="btn btn2" onclick="deleteAccount()">حذف العضوية</button></div>
+  <div class="profile-wall"><img id="wallImg"><button class="btn" style="position:absolute;bottom:5px;right:5px;width:auto" onclick="uploadWall()">تغيير الحائط</button></div>
+  <div class="card" style="text-align:center;margin-top:-30px"><img id="profileAvatar" class="avatar" style="width:80px;height:80px;border:3px solid #fff"><button class="btn" style="width:auto" onclick="uploadAvatar()">تغيير الصورة</button><h3 id="profileName"></h3><p id="profileRank"></p><p><span id="profileCoins">0</span>💲 | <span id="profileLikes">0</span>❤️</p></div>
+  <div class="card"><h4>التخصيص - للمميز وفوق</h4><input class="input" id="nameColor" type="color"><input class="input" id="textColor" type="color"><select class="input" id="fontSize"><option>14px</option><option>16px</option><option>18px</option></select><button class="btn" onclick="saveCustom()">حفظ التخصيص</button></div>
+  <div class="card"><h4>إعدادات الخاص</h4><select class="input" id="pmSetting"><option value="all">للجميع</option><option value="members">للأعضاء فقط</option><option value="friends">للأصدقاء فقط</option><option value="off">إيقاف عن الكل</option></select><button class="btn" onclick="savePmSetting()">حفظ</button></div>
 </div>
+
+<!-- حائط الأصدقاء -->
+<div id="friendsPage" class="page"><div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span>حائط الأصدقاء</span></div><div id="friendsWall" style="padding:10px"></div><div class="input-bar"><input id="wallInput" class="input" placeholder="اكتب منشور..."><button class="btn" style="width:auto" onclick="postWall()">نشر</button></div></div>
 
 <!-- المتجر -->
 <div id="storePage" class="page"><div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span>المتجر 🛒</span></div><div id="storeList" style="padding:10px"></div></div>
@@ -81,7 +104,11 @@ body{background:var(--bg);color:var(--text);transition:0.3s}
 <div id="newsPage" class="page"><div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span>الأخبار</span></div><div id="newsList" style="padding:10px"></div><div id="newsAdmin" class="card" style="display:none"><input class="input" id="newsInput" placeholder="اكتب الخبر"><button class="btn" onclick="postNews()">نشر</button></div></div>
 
 <!-- لوحة الادارة -->
-<div id="adminPage" class="page"><div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span>لوحة التحكم</span></div><div id="adminLogs" class="card"></div></div>
+<div id="adminPage" class="page"><div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span>لوحة التحكم</span></div>
+  <div class="card"><h4>النظام الآلي</h4><textarea class="input" id="badWordsList" rows="3" placeholder="كلمات ممنوعة مفصولة بفاصلة"></textarea><button class="btn" onclick="saveAutoMod()">حفظ الكلمات</button></div>
+  <div class="card"><h4>مراقبين الغرف</h4><input class="input" id="roomModName" placeholder="اسم العضو"><select class="input" id="roomModRoom"><option>العامة</option><option>اليمن</option><option>الجزائر</option><option>مصر</option></select><button class="btn" onclick="addRoomMod()">تعيين مشرف غرفة</button></div>
+  <div id="adminLogs" class="card"></div>
+</div>
 
 <!-- قائمة المتواجدين -->
 <div id="usersList" class="users-list"><div class="header"><span>المتواجدين <span id="usersCount">0</span></span><button class="icon-btn" onclick="toggleUsers()">X</button></div><div id="usersBox"></div></div>
@@ -96,25 +123,25 @@ body{background:var(--bg);color:var(--text);transition:0.3s}
 const API = "https://chat-yanan-1.onrender.com";
 const socket = io(API);
 let currentUser={}, currentRoom='العامة', selectedGender='male', selectedUser=null, pmUser=null;
-let mutedUsers=[], likedUsers=[];
+let mutedUsers=[], likedUsers=[], mediaRecorder, audioChunks=[], roomMods={}, badWords=['كلمة1','كلمة2','سب'];
 
 const ranks={visitor:{emoji:"🤖",class:"rank-visitor"},member:{emoji:"👤",class:"rank-member"},vip:{emoji:"💎",class:"rank-vip"},mod:{emoji:"🛡️",class:"rank-mod"},admin:{emoji:"☆",class:"rank-admin"},owner:{emoji:"👑",class:"rank-owner"}};
-const badWords=['كلمة1','كلمة2','سب']; // النظام الآلي
 
 function setGender(g){selectedGender=g;document.querySelectorAll('.gender-btn').forEach(b=>b.classList.remove('active'));document.querySelector('.gender-'+g).classList.add('active');}
 function randomAge(){return Math.floor(Math.random()*80)+20;}
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
 
-async function loginVisitor(){let name=document.getElementById('visitorName').value;if(!name) return alert("اكتب اسمك");currentUser={name,rank:'visitor',gender:selectedGender,age:randomAge(),coins:0,likes:0};goRooms();socket.emit('join',currentUser);addCoins(1);}
+async function loginVisitor(){let name=document.getElementById('visitorName').value;if(!name) return alert("اكتب اسمك");currentUser={name,rank:'visitor',gender:selectedGender,age:randomAge(),coins:0,likes:0,pm:'all',custom:{}};goRooms();socket.emit('join',currentUser);addCoins(1);}
 async function loginMember(){let name=document.getElementById('loginName').value;let pass=document.getElementById('loginPass').value;let res=await fetch(API+'/login',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,pass})});currentUser=await res.json();goRooms();socket.emit('join',currentUser);addCoins(1);}
-async function register(){let data={name:document.getElementById('regName').value,pass:document.getElementById('regPass').value,email:document.getElementById('regEmail').value,gender:document.getElementById('regGender').value,age:document.getElementById('regAge').value||randomAge(),rank:'member',coins:0,likes:0};let res=await fetch(API+'/register',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});currentUser=await res.json();goRooms();socket.emit('join',currentUser);}
+async function register(){let data={name:document.getElementById('regName').value,pass:document.getElementById('regPass').value,email:document.getElementById('regEmail').value,gender:document.getElementById('regGender').value,age:document.getElementById('regAge').value||randomAge(),rank:'member',coins:0,likes:0,pm:'all',custom:{}};let res=await fetch(API+'/register',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});currentUser=await res.json();goRooms();socket.emit('join',currentUser);}
 
 function goRooms(){showPage('roomsPage');loadRooms();if(['admin','owner'].includes(currentUser.rank))document.getElementById('adminBtn').style.display='block';}
-function loadRooms(){let rooms=['العامة','اليمن','الجزائر','مصر'];document.getElementById('roomsList').innerHTML=rooms.map(r=>`<div class="room"><div>🌎 غرفة ${r} 🌎</div><button class="btn" onclick="enterRoom('${r}')">اضغط هنا للدخول</button></div>`).join('');}
+function loadRooms(){let rooms=['العامة','اليمن','الجزائر','مصر'];document.getElementById('roomsList').innerHTML=rooms.map(r=>`<div class="room"><div>🌎 غرفة ${r} 🌎 ${roomMods[r]?'<span style="color:#2196F3">[مشرف: '+roomMods[r]+']</span>':''}</div><button class="btn" onclick="enterRoom('${r}')">اضغط هنا للدخول</button></div>`).join('');}
 function enterRoom(room){currentRoom=room;socket.emit('joinRoom',room);showPage('chatPage');document.getElementById('roomName').innerText=room;document.getElementById('chatBox').innerHTML="";socket.emit('system',`انضم للغرفة ${currentUser.name} هلا وسهلا`);loadMsgs(room);updateButtons();}
 
 function updateButtons(){
-  if(['visitor','member'].includes(currentUser.rank)){
+  let isMod = roomMods[currentRoom]==currentUser.name;
+  if(['visitor','member'].includes(currentUser.rank) &&!isMod){
     document.getElementById('uploadBtn').style.display='none';
     document.getElementById('youtubeBtn').style.display='none';
   } else {
@@ -123,12 +150,16 @@ function updateButtons(){
   }
 }
 
+// الراديو
+function toggleRadio(){let player=document.getElementById('radioPlayer');let btn=document.getElementById('playBtn');if(player.paused){player.play();btn.innerText='⏸️';}else{player.pause();btn.innerText='▶️';}}
+
 socket.on('newMsg', (msg)=>{
   if(msg.room!=currentRoom) return;
   if(mutedUsers.includes(msg.sender)) return;
   let time=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) + ' + new Date().toLocaleDateString('ar-EG');
   let genderClass = msg.gender||'male';
-  document.getElementById('chatBox').innerHTML+=`<div class="msg" onclick="showUserPopup('${msg.sender}','${msg.senderRank}','${msg.gender}')"><div class="avatar ${genderClass}"></div><div class="msg-content"><div class="msg-name ${ranks[msg.senderRank]?.class}">${ranks[msg.senderRank]?.emoji} ${msg.sender}</div><div class="msg-text">${msg.text}</div><div class="time">${time}</div></div></div>`;
+  let style = `color:${msg.color||'#fff'};font-size:${msg.size||'14px'}`;
+  document.getElementById('chatBox').innerHTML+=`<div class="msg" onclick="showUserPopup('${msg.sender}','${msg.senderRank}','${msg.gender}')"><div class="avatar ${genderClass}"></div><div class="msg-content"><div class="msg-name ${ranks[msg.senderRank]?.class}" style="color:${msg.nameColor||''}">${ranks[msg.senderRank]?.emoji} ${msg.sender}</div><div class="msg-text" style="${style}">${msg.text}</div><div class="time">${time}</div></div></div>`;
   document.getElementById('chatBox').scrollTop=99999;
   if(msg.sender==currentUser.name) addCoins(2);
 });
@@ -151,40 +182,33 @@ function sendMsg(){
   if(!txt) return;
   if(!checkAutoMod(txt)) return alert("تم كتمك تلقائي بسبب مخالفة");
   txt=txt.replace(/\*\*\*(.*?)\*\*\*/g,'<b>$1</b>');
-  socket.emit('sendMsg',{room:currentRoom,sender:currentUser.name,senderRank:currentUser.rank,gender:currentUser.gender,text:txt});
+  socket.emit('sendMsg',{room:currentRoom,sender:currentUser.name,senderRank:currentUser.rank,gender:currentUser.gender,text:txt,color:currentUser.custom?.textColor,size:currentUser.custom?.fontSize,nameColor:currentUser.custom?.nameColor});
   document.getElementById('msgInput').value="";
 }
 
-function uploadImg(){if(['visitor','member'].includes(currentUser.rank)) return alert("للمميز وما فوق فقط");let i=document.createElement('input');i.type='file';i.onchange=async e=>{let f=new FormData();f.append('file',e.target.files[0]);let r=await fetch(API+'/upload',{method:"POST",body:f});let d=await r.json();sendMsg(`<img src="${API+d.url}" style="max-width:200px;border-radius:10px">`)};i.click();}
-function sendYoutube(){if(['visitor','member'].includes(currentUser.rank)) return alert("للمميز وما فوق فقط");let url=prompt("الصق رابط يوتيوب");if(url)sendMsg(`<iframe src="${url.replace('watch?v=','embed/')}" width="200" height="120" frameborder="0"></iframe>`);}
-function recordVoice(){alert("جاري التسجيل...");}
+async function startRecord(){
+  document.getElementById('micBtn').classList.add('recording');
+  let stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  mediaRecorder = new MediaRecorder(stream);
+  mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+  mediaRecorder.onstop = async () => {
+    let blob = new Blob(audioChunks);
+    let f = new FormData(); f.append('file', blob, 'voice.mp3');
+    let r = await fetch(API+'/upload',{method:"POST",body:f});
+    let d = await r.json();
+    sendMsg(`<audio controls src="${API+d.url}"></audio>`);
+  };
+  mediaRecorder.start();
+}
+function stopRecord(){document.getElementById('micBtn').classList.remove('recording');mediaRecorder.stop();}
+
+function uploadImg(){let isMod = roomMods[currentRoom]==currentUser.name;if(['visitor','member'].includes(currentUser.rank) &&!isMod) return alert("للمميز وما فوق فقط");let i=document.createElement('input');i.type='file';i.onchange=async e=>{let f=new FormData();f.append('file',e.target.files[0]);let r=await fetch(API+'/upload',{method:"POST",body:f});let d=await r.json();sendMsg(`<img src="${API+d.url}" style="max-width:200px;border-radius:10px">`)};i.click();}
+function sendYoutube(){let isMod = roomMods[currentRoom]==currentUser.name;if(['visitor','member'].includes(currentUser.rank) &&!isMod) return alert("للمميز وما فوق فقط");let url=prompt("الصق رابط يوتيوب");if(url)sendMsg(`<iframe src="${url.replace('watch?v=','embed/')}" width="200" height="120" frameborder="0"></iframe>`);}
+
 function toggleUsers(){document.getElementById('usersList').classList.toggle('show');loadUsers();}
 async function loadUsers(){let res=await fetch(API+'/users');let users=await res.json();document.getElementById('usersCount').innerText=users.length;document.getElementById('usersBox').innerHTML=users.sort((a,b)=>getRankLevel(b.rank)-getRankLevel(a.rank)).map(u=>`<div class="user-item" onclick="showUserPopup('${u.name}','${u.rank}','${u.gender}')"><div class="avatar ${u.gender}"></div><div><div class="${ranks[u.rank]?.class}">${ranks[u.rank]?.emoji} ${u.name}</div></div></div>`).join('');}
 function getRankLevel(r){return {owner:7,admin:6,mod:5,vip:4,member:3,visitor:2}[r]||1;}
 
-function showUserPopup(name,rank,gender){selectedUser={name,rank,gender};document.getElementById('popupName').innerText=name;document.getElementById('popupInfo').innerText=`${randomAge()} سنة ${gender=='male'?'ذكر':'أنثى'}`;document.getElementById('popupAvatar').className=`avatar ${gender}`;document.getElementById('likeCount').innerText=currentUser.likes||0;if(['admin','owner','mod'].includes(currentUser.rank))document.getElementById('popupAdminBtn').style.display='block';document.getElementById('userPopup').style.display='block';}
+function showUserPopup(name,rank,gender){selectedUser={name,rank,gender};document.getElementById('popupName').innerText=name;document.getElementById('popupInfo').innerText=`${randomAge()} سنة ${gender=='male'?'ذكر':'أنثى'}`;document.getElementById('popupAvatar').className=`avatar ${gender}`;document.getElementById('likeCount').innerText=currentUser.likes||0;if(['admin','owner','mod'].includes(currentUser.rank) || roomMods[currentRoom]==currentUser.name)document.getElementById('popupAdminBtn').style.display='block';document.getElementById('userPopup').style.display='block';}
 function closePopup(){document.getElementById('userPopup').style.display='none';}
-function openPM(){pmUser=selectedUser.name;document.getElementById('pmName').innerText=pmUser;document.getElementById('pmWindow').style.display='flex';closePopup();}
-function closePM(){document.getElementById('pmWindow').style.display='none';}
-function sendPM(){let txt=document.getElementById('pmInput').value;if(!txt)return;socket.emit('pm',{to:pmUser,from:currentUser.name,text:txt});document.getElementById('pmChat').innerHTML+=`<div style="text-align:right"><b>أنا:</b> ${txt}</div>`;document.getElementById('pmInput').value="";}
-socket.on('pm',(data)=>{if(data.to==currentUser.name){document.getElementById('pmChat').innerHTML+=`<div><b>${data.from}:</b> ${data.text}</div>`;document.getElementById('pmWindow').style.display='flex';}});
-
-function likeUser(){if(likedUsers.includes(selectedUser.name)) return alert("خلاص سويت لايك قبل");likedUsers.push(selectedUser.name);socket.emit('like',{to:selectedUser.name});alert("تم ارسال لايك ل "+selectedUser.name);closePopup();}
-socket.on('like',(data)=>{if(data.to==currentUser.name){currentUser.likes=(currentUser.likes||0)+1;}});
-
-function adminActions(){let action=prompt("1=كتم 10د 2=طرد 5د");if(action==1)socket.emit('mute',{name:selectedUser.name,min:10});if(action==2)socket.emit('kick',{name:selectedUser.name,min:5});closePopup();}
-
-function addCoins(x){currentUser.coins=(currentUser.coins||0)+x;}
-function openProfile(){showPage('profilePage');document.getElementById('profileName').innerText=currentUser.name;document.getElementById('profileRank').innerHTML=`${ranks[currentUser.rank]?.emoji} ${currentUser.rank}`;document.getElementById('profileCoins').innerText=currentUser.coins||0;document.getElementById('profileLikes').innerText=currentUser.likes||0;}
-async function openStore(){showPage('storePage');document.getElementById('storeList').innerHTML=`<div class="card"><h3>شراء رتبة مميز</h3><p>السعر: 500💲</p><button class="btn" onclick="buy('vip',500)">شراء</button></div><div class="card"><h3>شراء رتبة مشرف</h3><p>السعر: 1000💲</p><button class="btn" onclick="buy('mod',1000)">شراء</button></div>`;}
-async function buy(item,price){if(currentUser.coins<price)return alert("رصيدك ما يكفي");currentUser.coins-=price;currentUser.rank=item;alert("تم شراء "+item);addCoins(0);}
-async function openNews(){showPage('newsPage');let res=await fetch(API+'/news');document.getElementById('newsList').innerHTML=(await res.json()).map(n=>`<div class="card"><b>${n.admin}:</b> ${n.text}</div>`).join('')||"<div class='card'>لا يوجد اخبار</div>";if(['admin','owner'].includes(currentUser.rank))document.getElementById('newsAdmin').style.display='block';}
-function postNews(){let txt=document.getElementById('newsInput').value;if(!txt)return;fetch(API+'/news',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({admin:currentUser.name,rank:currentUser.rank,text:txt})});document.getElementById('newsInput').value="";}
-async function openAdmin(){showPage('adminPage');let res=await fetch(API+'/logs');document.getElementById('adminLogs').innerHTML=(await res.json()).map(l=>`<div>${new Date(l.time).toLocaleString()} - ${l.admin} ${l.action} ${l.target}</div>`).join('')||"لا يوجد سجل";}
-function toggleTheme(){let theme=document.body.classList.contains('dark')?'light':'dark';document.body.className=theme;}
-function changePassword(){let p=prompt("الباسورد الجديد");if(p)alert("تم التغيير");}
-function deleteAccount(){if(confirm("متأكد؟"))alert("تم حذف الحساب");}
-async function logout(){await fetch(API+'/logout',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(currentUser)});location.reload();}
-</script>
-</body>
-</html>
+function openPM(){if(currentUser.pm=='off') return alert("انت موقف الخاص");pmUser=selectedUser.name;document.get
