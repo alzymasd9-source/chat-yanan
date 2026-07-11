@@ -1,6 +1,7 @@
 {
   "name": "chat-yemen-pro",
   "version": "1.4.0",
+  "description": "شات اليمن المطور",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -11,4 +12,10 @@
     "cors": "^2.8.5",
     "sqlite3": "^5.1.7",
     "sqlite": "^5.1.1",
-    "bad-words":
+    "bad-words": "^3.0.4",
+    "rate-limiter-flexible": "^5.0.1"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}
