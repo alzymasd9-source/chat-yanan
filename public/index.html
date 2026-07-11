@@ -1,46 +1,45 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>شات اليمن 5.3</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>شات اليمن 5.4</title>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0A0A0A;--card:#1A1A1A;--text:#FFF;--primary:#FFD700;--secondary:#FFA500}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif}
-body{background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
-.page{display:none;height:100vh;flex-direction:column}.active{display:flex}
-.header{background:linear-gradient(90deg,var(--primary),var(--secondary));padding:12px;display:flex;justify-content:space-between;color:#000;font-weight:bold;flex-shrink:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
+.page{display:none;height:100%;flex-direction:column}.active{display:flex}
+.header{background:linear-gradient(90deg,var(--primary),var(--secondary));padding:12px;display:flex;justify-content:space-between;color:#000;font-weight:bold}
 .card{background:var(--card);padding:15px;border-radius:12px;margin:10px}
-.input{width:100%;padding:10px;border-radius:8px;border:1px solid #444;background:#222;color:#fff}
-.btn{width:100%;padding:12px;border:none;border-radius:8px;background:linear-gradient(90deg,var(--primary),var(--secondary));color:#000;font-weight:bold;margin:5px 0;cursor:pointer}
+.input{flex:1;padding:12px;border-radius:8px;border:1px solid #444;background:#222;color:#fff;font-size:16px}
+.btn{padding:12px 20px;border:none;border-radius:8px;background:linear-gradient(90deg,var(--primary),var(--secondary));color:#000;font-weight:bold;cursor:pointer;font-size:16px}
 .room{padding:15px;background:var(--card);border-radius:10px;margin:8px 0;text-align:center}
 .chat{flex:1;overflow-y:auto;padding:10px;background:#111}
-.msg{display:flex;gap:8px;margin:8px 0;align-items:flex-start}
-.avatar{width:40px;height:40px;border-radius:50%;border:2px solid #2196F3;flex-shrink:0}
-.input-bar{display:flex;gap:5px;padding:10px;background:var(--card);border-top:1px solid #333;flex-shrink:0}
-.icon-btn{background:var(--primary);border:none;color:#000;font-size:18px;cursor:pointer;border-radius:8px;padding:0 15px;font-weight:bold}
-.radio-bar{padding:8px;background:#222;display:flex;gap:10px;align-items:center;flex-shrink:0}
-#status{position:fixed;bottom:70px;left:10px;background:#4CAF50;color:#fff;padding:5px 10px;border-radius:5px;font-size:12px;z-index:999}
+.msg{display:flex;gap:8px;margin:8px 0}
+.avatar{width:40px;height:40px;border-radius:50%;border:2px solid #2196F3}
+.input-bar{display:flex;gap:8px;padding:10px;background:var(--card);border-top:1px solid #333}
+.radio-bar{padding:8px;background:#222;display:flex;gap:10px;align-items:center}
+#status{position:fixed;bottom:80px;left:10px;background:#4CAF50;color:#fff;padding:5px 10px;border-radius:5px;font-size:12px}
 </style>
 </head>
-<body class="dark">
+<body>
 <div id="status">متصل ✅</div>
 
 <div id="loginPage" class="page active">
-  <h2 style="text-align:center;color:var(--primary);margin:20px 0">شات اليمن 5.3 🇾🇪</h2>
-  <div class="card"><h3>دخول زوار</h3><input class="input" id="visitorName" placeholder="اسمك"><button class="btn" onclick="loginVisitor()">دخول</button></div>
+  <h2 style="text-align:center;color:var(--primary);margin:20px 0">شات اليمن 5.4 🇾🇪</h2>
+  <div class="card"><input class="input" id="visitorName" placeholder="اكتب اسمك" style="margin-bottom:10px"><button class="btn" style="width:100%" onclick="loginVisitor()">دخول زائر</button></div>
 </div>
 
-<div id="roomsPage" class="page"><div class="header"><span>الغرف</span></div><div id="roomsList" style="padding:10px;overflow-y:auto;flex:1"></div></div>
+<div id="roomsPage" class="page"><div class="header"><span>اختر غرفة</span></div><div id="roomsList" style="padding:10px;flex:1;overflow-y:auto"></div></div>
 
 <div id="chatPage" class="page">
-  <div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span id="roomName"></span></div>
-  <div class="radio-bar"><button class="icon-btn" id="playBtn" onclick="toggleRadio()">▶️</button><span>إذاعة اليمن</span><audio id="radioPlayer" src="https://stream.zeno.fm/0r0a792kwz8uv"></audio></div>
+  <div class="header"><button class="btn" onclick="goRooms()">← رجوع</button><span id="roomName"></span></div>
+  <div class="radio-bar"><button class="btn" id="playBtn" onclick="toggleRadio()">▶️ تشغيل</button><span>إذاعة اليمن</span><audio id="radioPlayer" src="https://stream.zeno.fm/0r0a792kwz8uv"></audio></div>
   <div class="chat" id="chatBox"></div>
   <div class="input-bar">
-    <input id="msgInput" class="input" placeholder="اكتب..." onkeypress="if(event.key==='Enter') sendMsg()">
-    <button class="icon-btn" onclick="sendMsg()">ارسال</button>
+    <input id="msgInput" class="input" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter') sendMsg()">
+    <button class="btn" onclick="sendMsg()">ارسال</button>
   </div>
 </div>
 
@@ -53,21 +52,21 @@ socket.on('connect',()=>document.getElementById('status').innerText="متصل �
 
 async function loginVisitor(){
 let name=document.getElementById('visitorName').value;if(!name) return alert("اكتب اسمك");
-currentUser={name,rank:'visitor',gender:'male'};
+currentUser={name,rank:'visitor'};
 socket.emit('join',currentUser);
 goRooms();
 }
 
 function goRooms(){showPage('roomsPage');loadRooms();}
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
-function loadRooms(){let rooms=['العامة','اليمن','الجزائر','مصر'];document.getElementById('roomsList').innerHTML=rooms.map(r=>`<div class="room"><div>🌎 ${r}</div><button class="btn" onclick="enterRoom('${r}')">دخول</button></div>`).join('');}
+function loadRooms(){let rooms=['العامة','اليمن','الجزائر','مصر'];document.getElementById('roomsList').innerHTML=rooms.map(r=>`<div class="room"><b>${r}</b><button class="btn" style="margin-top:8px;width:100%" onclick="enterRoom('${r}')">دخول الغرفة</button></div>`).join('');}
 function enterRoom(room){currentRoom=room;socket.emit('joinRoom',room);showPage('chatPage');document.getElementById('roomName').innerText=room;}
 
-function toggleRadio(){let p=document.getElementById('radioPlayer');let b=document.getElementById('playBtn');if(p.paused){p.play();b.innerText='⏸️';}else{p.pause();b.innerText='▶️';}}
+function toggleRadio(){let p=document.getElementById('radioPlayer');let b=document.getElementById('playBtn');if(p.paused){p.play();b.innerText='⏸️ ايقاف';}else{p.pause();b.innerText='▶️ تشغيل';}}
 
-socket.on('newMsg', (msg)=>{if(msg.room!=currentRoom) return;document.getElementById('chatBox').innerHTML+=`<div class="msg"><div class="avatar"></div><div><b>${msg.sender}</b><div>${msg.text}</div></div></div>`;document.getElementById('chatBox').scrollTop=99999;});
+socket.on('newMsg', (msg)=>{if(msg.room!=currentRoom) return;document.getElementById('chatBox').innerHTML+=`<div class="msg"><div class="avatar"></div><div><b style="color:var(--primary)">${msg.sender}</b><div>${msg.text}</div></div></div>`;document.getElementById('chatBox').scrollTop=99999;});
 
-function sendMsg(){let txt=document.getElementById('msgInput').value;if(!txt) return;socket.emit('sendMsg',{room:currentRoom,sender:currentUser.name,senderRank:currentUser.rank,gender:currentUser.gender,text:txt});document.getElementById('msgInput').value="";}
+function sendMsg(){let txt=document.getElementById('msgInput').value;if(!txt) return;socket.emit('sendMsg',{room:currentRoom,sender:currentUser.name,senderRank:currentUser.rank,text:txt});document.getElementById('msgInput').value="";}
 </script>
 </body>
 </html>
