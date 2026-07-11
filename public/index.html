@@ -11,22 +11,19 @@ body{margin:0;font-family:tahoma;background:#f0f0f0;overflow:hidden}
 #wrap{display:flex;height:100vh;padding-top:55px}
 #sidebar{width:280px;background:#fff;border-left:1px solid #ddd;display:flex;flex-direction:column}
 #users_list{flex:1;overflow:auto;padding:10px}
-.user-item{display:flex;align-items:center;padding:8px;border-radius:8px;cursor:pointer;position:relative}
+.user-item{display:flex;align-items:center;padding:8px;border-radius:8px;cursor:pointer}
 .user-item:hover{background:#f5f5f5}
 .user-avatar{width:35px;height:35px;border-radius:50%;background:#ccc;display:flex;align-items:center;justify-content:center;margin-left:10px;font-weight:bold}
 .admin-tag{font-size:10px;background:red;color:#fff;padding:2px 5px;border-radius:4px;margin-right:5px}
 #chat_area{flex:1;display:flex;flex-direction:column}
 #messages{flex:1;overflow:auto;padding:10px;background:#e5ddd5}
-.msg{background:#fff;padding:8px 12px;border-radius:7px;margin:5px 0;max-width:70%;position:relative}
+.msg{background:#fff;padding:8px 12px;border-radius:7px;margin:5px 0;max-width:70%}
 .msg.me{background:var(--light);margin-right:auto}
 .msg .time{font-size:11px;color:#999;text-align:left}
-.msg-actions{position:absolute;left:5px;top:5px;display:none;gap:5px;font-size:14px;cursor:pointer}
-.msg:hover .msg-actions{display:flex}
 .mention-name{cursor:pointer;color:var(--green);font-weight:bold}
-#chat-input{padding:10px;background:#f0f0f0;display:flex;gap:10px;position:relative}
+#chat-input{padding:10px;background:#f0f0f0;display:flex;gap:10px}
 #msg_input{flex:1;padding:10px;border:1px solid #ddd;border-radius:20px}
 .btn{background:var(--green);color:#fff;border:none;padding:10px 15px;border-radius:20px;cursor:pointer}
-#reply_box{position:absolute;bottom:55px;left:10px;right:60px;background:#e9edef;padding:8px;border-right:3px solid var(--green);border-radius:5px;font-size:13px;}
 .hide{display:none}
 #roomid{position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:999;display:flex;align-items:center;justify-content:center}
 @media(max-width:768px){#sidebar{position:absolute;z-index:5;height:100%}}
@@ -41,9 +38,8 @@ body{margin:0;font-family:tahoma;background:#f0f0f0;overflow:hidden}
     <div id="room_title" style="padding:10px;background:#fff;border-bottom:1px solid #ddd">العام</div>
     <div id="messages"></div>
     <div id="chat-input">
-      <div id="reply_box" class="hide"><span id="reply_close" style="float:left;cursor:pointer">×</span><b id="reply_name"></b><div id="reply_text"></div></div>
       <input id="msg_input" placeholder="اكتب رسالتك...">
-      <button class="btn" id="send_btn">ارسال</button>
+      <button class="btn" type="button" id="send_btn">ارسال</button>
     </div>
   </div>
 </div>
@@ -51,26 +47,24 @@ body{margin:0;font-family:tahoma;background:#f0f0f0;overflow:hidden}
 <div id="roomid">
   <div style="text-align:center">
     <h3>أهلاً بك في شات اليمن المطور</h3>
-    <input id="name_input" placeholder="اسمك">
-    <button class="btn" id="guest_btn">دخول</button>
+    <input id="name_input" placeholder="اسمك" style="padding:10px;border-radius:10px;border:1px solid #ddd">
+    <button class="btn" type="button" id="guest_btn">دخول</button>
   </div>
 </div>
 
-<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const socket=io();
-let myId, currentUser, replyToMsg=null, lastMentioned=null, pmWith=null;
+let myId, currentUser, lastMentioned=null;
 
 $('guest_btn').onclick=()=>{
-  const name=$('name_input').value; 
+  const name=$('name_input').value.trim(); 
   if(!name)return alert('دخل اسمك'); 
   currentUser={name,gender:'male'}; 
   socket.emit('join',currentUser); 
   $('roomid').classList.add('hide');
 }
-
-socket.on('you are',d=>{myId=d.id;});
 
 function mentionUser(name){
   lastMentioned=name; 
@@ -80,15 +74,15 @@ function mentionUser(name){
 
 function send(type,content){
   if(!content.trim())return;
-  socket.emit('message',{type,content,mention:lastMentioned,replyTo:replyToMsg}); 
+  socket.emit('message',{type,content,mention:lastMentioned}); 
   lastMentioned=null; 
-  replyToMsg=null; 
-  $('reply_box').classList.add('hide'); 
   $('msg_input').value='';
 }
 
 $('send_btn').onclick=()=>send('text',$('msg_input').value);
-$('msg_input').onkeypress=e=>{if(e.key==='Enter')send('text',e.target.value)}
+$('msg_input').onkeypress=e=>{if(e.key==='Enter'){e.preventDefault(); send('text',e.target.value)}}
+
+socket.on('you are',d=>{myId=d.id;});
 
 socket.on('message',d=>{
   const div=document.createElement('div');
@@ -111,14 +105,9 @@ socket.on('users list',list=>{
 })
 
 socket.on('user joined',u=>{
-  addMsg('sys',`${u.name} دخل الشات`);
-  socket.emit('get users');
-})
-
-function addMsg(type,msg){
   const div=document.createElement('div');
   div.style.textAlign='center'; div.style.color='#999'; div.style.fontSize='12px';
-  div.innerText=msg; $('messages').appendChild(div);
-}
+  div.innerText=`${u.name} دخل الشات`; $('messages').appendChild(div);
+})
 </script>
 </body></html>
