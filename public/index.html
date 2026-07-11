@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>شات اليمن 5.9</title>
+<title>شات اليمن 6.1</title>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -22,41 +22,28 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
 .icon-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--primary)}
 .users-list{position:fixed;right:0;top:0;bottom:0;width:280px;background:var(--card);transform:translateX(100%);transition:0.3s;z-index:99}
 .users-list.show{transform:translateX(0)}
-.user-item{padding:10px;border-bottom:1px solid #333;cursor:pointer}
+.user-item{padding:10px;border-bottom:1px solid #333}
 #status{position:fixed;bottom:80px;left:10px;background:#4CAF50;color:#fff;padding:5px 10px;border-radius:5px;font-size:12px;z-index:999}
 .tabs{display:flex;gap:5px;margin-bottom:10px}
 .tab{flex:1;text-align:center;padding:8px;background:#333;border-radius:5px;cursor:pointer}
 .tab.active{background:var(--primary);color:#000}
+.shop-popup{display:none;position:fixed;top:10%;left:5%;right:5%;background:#222;padding:15px;border-radius:10px;z-index:999;max-height:70%;overflow-y:auto}
 </style>
 </head>
 <body>
 <div id="status">متصل ✅</div>
 
 <div id="loginPage" class="page active">
-  <h2 style="text-align:center;color:var(--primary);margin:20px 0">شات اليمن 5.9 🇾🇪</h2>
+  <h2 style="text-align:center;color:var(--primary);margin:20px 0">شات اليمن 6.1 🇾🇪</h2>
   <div class="card">
     <div class="tabs">
       <div class="tab active" onclick="showTab('visitor')">زائر</div>
       <div class="tab" onclick="showTab('login')">دخول</div>
       <div class="tab" onclick="showTab('register')">تسجيل</div>
     </div>
-
-    <div id="visitorTab">
-      <input class="input" id="visitorName" placeholder="اكتب اسمك">
-      <button class="btn" onclick="loginVisitor()">دخول زائر</button>
-    </div>
-
-    <div id="loginTab" style="display:none">
-      <input class="input" id="loginName" placeholder="الاسم">
-      <input class="input" id="loginPass" type="password" placeholder="كلمة السر">
-      <button class="btn" onclick="loginUser()">دخول</button>
-    </div>
-
-    <div id="registerTab" style="display:none">
-      <input class="input" id="regName" placeholder="الاسم الجديد">
-      <input class="input" id="regPass" type="password" placeholder="كلمة السر">
-      <button class="btn" onclick="registerUser()">تسجيل</button>
-    </div>
+    <div id="visitorTab"><input class="input" id="visitorName" placeholder="اكتب اسمك"><button class="btn" onclick="loginVisitor()">دخول زائر</button></div>
+    <div id="loginTab" style="display:none"><input class="input" id="loginName" placeholder="الاسم"><input class="input" id="loginPass" type="password" placeholder="كلمة السر"><button class="btn" onclick="loginUser()">دخول</button></div>
+    <div id="registerTab" style="display:none"><input class="input" id="regName" placeholder="الاسم الجديد"><input class="input" id="regPass" type="password" placeholder="كلمة السر"><button class="btn" onclick="registerUser()">تسجيل</button></div>
   </div>
 </div>
 
@@ -66,11 +53,18 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
   <div class="header"><button class="btn" style="width:auto" onclick="goRooms()">← رجوع</button><span id="roomName"></span><button class="btn" style="width:auto" onclick="toggleUsers()">👥</button></div>
   <div class="radio-bar"><button class="btn" style="width:auto" id="playBtn" onclick="toggleRadio()">▶️ تشغيل</button><span>إذاعة اليمن</span><audio id="radioPlayer" src="https://stream.zeno.fm/0r0a792kwz8uv"></audio></div>
   <div class="chat" id="chatBox"></div>
+  <button class="btn" onclick="openShop()">🛒 المتجر - الكوينز: <span id="myCoins">0</span></button>
   <div class="input-bar">
     <button class="icon-btn" onclick="uploadImg()">+</button>
     <input id="msgInput" class="input" style="margin:0" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter') sendMsg()">
     <button class="btn" style="width:auto" onclick="sendMsg()">ارسال</button>
   </div>
+</div>
+
+<div id="shopBox" class="shop-popup">
+  <h3 style="color:var(--primary);margin-bottom:10px">المتجر</h3>
+  <div id="shopItems"></div>
+  <button class="btn" style="background:#f00" onclick="document.getElementById('shopBox').style.display='none'">اغلاق</button>
 </div>
 
 <div id="usersList" class="users-list">
@@ -84,41 +78,11 @@ const socket = io(API, {transports: ['websocket', 'polling']});
 let currentUser={}, currentRoom='العامة';
 
 socket.on('connect',()=>document.getElementById('status').innerText="متصل ✅");
+function showTab(tab){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('#visitorTab,#loginTab,#registerTab').forEach(d=>d.style.display='none');event.target.classList.add('active');document.getElementById(tab+'Tab').style.display='block';}
 
-function showTab(tab){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('#visitorTab,#loginTab,#registerTab').forEach(d=>d.style.display='none');
-  event.target.classList.add('active');
-  document.getElementById(tab+'Tab').style.display='block';
-}
-
-async function loginVisitor(){
-let name=document.getElementById('visitorName').value;if(!name) return alert("اكتب اسمك");
-currentUser={name,rank:'visitor'};
-socket.emit('join',currentUser);
-goRooms();
-}
-
-async function registerUser(){
-let name=document.getElementById('regName').value;
-let pass=document.getElementById('regPass').value;
-if(!name||!pass) return alert("كمل البيانات");
-let r=await fetch(API+'/register',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,pass})});
-let d=await r.json();
-if(d.error) return alert(d.error);
-alert("تم التسجيل بنجاح");
-showTab('login');
-}
-
-async function loginUser(){
-let name=document.getElementById('loginName').value;
-let pass=document.getElementById('loginPass').value;
-let r=await fetch(API+'/login',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,pass})});
-if(!r.ok) return alert("خطأ في الدخول");
-currentUser=await r.json();
-socket.emit('join',currentUser);
-goRooms();
-}
+async function loginVisitor(){let name=document.getElementById('visitorName').value;if(!name) return alert("اكتب اسمك");currentUser={name,rank:'visitor',coins:0,color:'#FFF'};socket.emit('join',currentUser);goRooms();}
+async function registerUser(){let name=document.getElementById('regName').value;let pass=document.getElementById('regPass').value;if(!name||!pass) return alert("كمل البيانات");let r=await fetch(API+'/register',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,pass})});let d=await r.json();if(d.error) return alert(d.error);alert("تم التسجيل بنجاح");showTab('login');}
+async function loginUser(){let name=document.getElementById('loginName').value;let pass=document.getElementById('loginPass').value;let r=await fetch(API+'/login',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,pass})});if(!r.ok) return alert("خطأ في الدخول");currentUser=await r.json();socket.emit('join',currentUser);goRooms();}
 
 function goRooms(){showPage('roomsPage');loadRooms();}
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
@@ -127,34 +91,17 @@ function enterRoom(room){currentRoom=room;socket.emit('joinRoom',room);showPage(
 
 function toggleRadio(){let p=document.getElementById('radioPlayer');let b=document.getElementById('playBtn');if(p.paused){p.play();b.innerText='⏸️ ايقاف';}else{p.pause();b.innerText='▶️ تشغيل';}}
 function toggleUsers(){document.getElementById('usersList').classList.toggle('show');}
+async function loadUsers(){let res=await fetch(API+'/users');let users=await res.json();document.getElementById('usersBox').innerHTML=users.map(u=>`<div class="user-item" style="color:${u.color}">${u.name} [${u.rank}]</div>`).join('');}
 
-async function loadUsers(){let res=await fetch(API+'/users');let users=await res.json();document.getElementById('usersBox').innerHTML=users.map(u=>`<div class="user-item">${u.name} - ${u.rank}</div>`).join('');}
+// المتجر
+function openShop(){document.getElementById('myCoins').innerText = currentUser.coins;fetch(API+'/shop').then(r=>r.json()).then(items=>{document.getElementById('shopItems').innerHTML = Object.keys(items).map(key=>{let i = items[key];return `<div class="card"><b>${i.name}</b> - ${i.price} كوين <button class="btn" onclick="buyItem('${key}')">شراء</button></div>`}).join('');document.getElementById('shopBox').style.display='block';})}
+async function buyItem(item){let r = await fetch(API+'/buy',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:currentUser.name,item})});let d = await r.json();if(d.error) return alert(d.error);currentUser = d;alert("تم الشراء بنجاح");openShop();}
 
-// رفع الصور - freeimage.host
-async function uploadImg(){
-let i=document.createElement('input');i.type='file';i.accept='image/*';
-i.onchange= async e=>{
-  document.getElementById('status').innerText="جاري رفع الصورة...";
-  let file = e.target.files[0];
-  let formData = new FormData();
-  formData.append("source", file);
+// رفع الصور
+async function uploadImg(){let i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange= async e=>{document.getElementById('status').innerText="جاري رفع الصورة...";let file = e.target.files[0];let reader = new FileReader();reader.onload = async () => {let r = await fetch(API+'/upload',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data: reader.result})});let d = await r.json();if(d.url){sendMsg(`<img src="${d.url}" style="max-width:200px;border-radius:10px">`)}else{alert("فشل الرفع")};document.getElementById('status').innerText="متصل ✅"};reader.readAsDataURL(file)};i.click();}
 
-  let r = await fetch(`https://freeimage.host/api/1/upload?key=6d207e02198a847aa98d0a2a901485a5`,{method:"POST",body:formData});
-  let d = await r.json();
-
-  if(d.status_code == 200){
-    sendMsg(`<img src="${d.image.url}" style="max-width:200px;border-radius:10px">`)
-    document.getElementById('status').innerText="متصل ✅";
-  }else{
-    alert("فشل الرفع");
-    document.getElementById('status').innerText="متصل ✅";
-  }
-};i.click();
-}
-
-socket.on('newMsg', (msg)=>{if(msg.room!=currentRoom) return;document.getElementById('chatBox').innerHTML+=`<div class="msg"><div class="avatar"></div><div><b style="color:var(--primary)">${msg.sender} [${msg.senderRank}]</b><div>${msg.text}</div></div></div>`;document.getElementById('chatBox').scrollTop=99999;});
-
-function sendMsg(){let txt=document.getElementById('msgInput').value;if(!txt) return;socket.emit('sendMsg',{room:currentRoom,sender:currentUser.name,senderRank:currentUser.rank,text:txt});document.getElementById('msgInput').value="";}
+socket.on('newMsg', (msg)=>{if(msg.room!=currentRoom) return;let color = msg.color || '#FFFFFF';document.getElementById('chatBox').innerHTML+=`<div class="msg"><div class="avatar"></div><div><b style="color:${color}">${msg.sender} [${msg.senderRank}]</b><div>${msg.text}</div></div></div>`;document.getElementById('chatBox').scrollTop=99999;});
+function sendMsg(){let txt=document.getElementById('msgInput').value;if(!txt) return;socket.emit('sendMsg',{room:currentRoom,sender:currentUser.name,senderRank:currentUser.rank,color:currentUser.color,text:txt});document.getElementById('msgInput').value="";}
 </script>
 </body>
 </html>
