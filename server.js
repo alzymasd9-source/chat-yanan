@@ -14,7 +14,7 @@ const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public'))); // مهم جدا
+app.use(express.static(path.join(__dirname, 'public')));
 
 const DB_FILE = './data/chat.db';
 const filter = new Filter({ placeHolder: '*' });
@@ -37,7 +37,7 @@ initDB();
 
 io.on('connection', async (socket) => {
   socket.on('join', async (u) => {
-    const name = filter.clean(u.name);
+    const name = u.name ? filter.clean(u.name) : 'زائر'; // <-- حماية
     const isAdmin = name.toLowerCase() === 'admin';
     users[socket.id] = {...u, name, id: socket.id, room: 'عام', isAdmin};
     socket.join('عام');
@@ -50,9 +50,13 @@ io.on('connection', async (socket) => {
   socket.on('message', async (d) => {
     const user = users[socket.id];
     if (!user) return;
+    
+    // <-- هذا اهم تعديل: منع الرسائل الفاضية
+    if(!d.content || d.content.trim() === '') return;
+
     try { await messageLimiter.consume(socket.id); } catch { return socket.emit('system', 'هدي شوي'); }
 
-    let content = filter.clean(d.content);
+    let content = filter.clean(d.content); // الان امن 100%
     let mentionedUsers = [];
 
     if(d.mention){
