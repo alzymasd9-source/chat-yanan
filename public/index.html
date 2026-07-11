@@ -2,79 +2,72 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>شات اليمن 5.2</title>
+<title>شات اليمن 5.3</title>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0A0A0A;--card:#1A1A1A;--text:#FFF;--primary:#FFD700;--secondary:#FFA500}
-body.dark{--bg:#0A0A0A;--card:#1A1A1A;--text:#FFF} body.light{--bg:#F5F5F5;--card:#FFF;--text:#000}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif}
-body{background:var(--bg);color:var(--text)}
+body{background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
 .page{display:none;height:100vh;flex-direction:column}.active{display:flex}
-.header{background:linear-gradient(90deg,var(--primary),var(--secondary));padding:12px;display:flex;justify-content:space-between;color:#000;font-weight:bold}
+.header{background:linear-gradient(90deg,var(--primary),var(--secondary));padding:12px;display:flex;justify-content:space-between;color:#000;font-weight:bold;flex-shrink:0}
 .card{background:var(--card);padding:15px;border-radius:12px;margin:10px}
-.input{width:100%;padding:10px;border-radius:8px;border:1px solid #444;background:#222;color:#fff;margin:5px 0}
+.input{width:100%;padding:10px;border-radius:8px;border:1px solid #444;background:#222;color:#fff}
 .btn{width:100%;padding:12px;border:none;border-radius:8px;background:linear-gradient(90deg,var(--primary),var(--secondary));color:#000;font-weight:bold;margin:5px 0;cursor:pointer}
-.gender-btn{padding:8px 12px;border:2px solid #444;border-radius:8px;margin:5px;cursor:pointer;background:#222;color:#fff}
-.gender-male.active{border-color:#2196F3}.gender-female.active{border-color:#E91E63}
 .room{padding:15px;background:var(--card);border-radius:10px;margin:8px 0;text-align:center}
 .chat{flex:1;overflow-y:auto;padding:10px;background:#111}
-.msg{display:flex;gap:8px;margin:8px 0}
-.avatar{width:40px;height:40px;border-radius:50%;border:2px solid #444}
-.avatar.male{border-color:#2196F3}.avatar.female{border-color:#E91E63}
-.input-bar{display:flex;gap:5px;padding:10px;background:var(--card)}
-.icon-btn{background:none;border:none;color:var(--primary);font-size:20px;cursor:pointer}
-.radio-bar{padding:8px;background:#222;display:flex;gap:10px}
-#status{position:fixed;bottom:10px;left:10px;background:#FF5722;color:#fff;padding:5px 10px;border-radius:5px;font-size:12px}
+.msg{display:flex;gap:8px;margin:8px 0;align-items:flex-start}
+.avatar{width:40px;height:40px;border-radius:50%;border:2px solid #2196F3;flex-shrink:0}
+.input-bar{display:flex;gap:5px;padding:10px;background:var(--card);border-top:1px solid #333;flex-shrink:0}
+.icon-btn{background:var(--primary);border:none;color:#000;font-size:18px;cursor:pointer;border-radius:8px;padding:0 15px;font-weight:bold}
+.radio-bar{padding:8px;background:#222;display:flex;gap:10px;align-items:center;flex-shrink:0}
+#status{position:fixed;bottom:70px;left:10px;background:#4CAF50;color:#fff;padding:5px 10px;border-radius:5px;font-size:12px;z-index:999}
 </style>
 </head>
 <body class="dark">
-<div id="status">جاري الاتصال...</div>
+<div id="status">متصل ✅</div>
 
 <div id="loginPage" class="page active">
-  <h2 style="text-align:center;color:var(--primary);margin:20px 0">شات اليمن 🇾🇪</h2>
-  <div class="card"><h3>دخول زوار</h3><input class="input" id="visitorName" placeholder="اسمك"><div><button class="gender-btn gender-male active" onclick="setGender('male')">ذكر</button><button class="gender-btn gender-female" onclick="setGender('female')">أنثى</button></div><button class="btn" onclick="loginVisitor()">دخول</button></div>
+  <h2 style="text-align:center;color:var(--primary);margin:20px 0">شات اليمن 5.3 🇾🇪</h2>
+  <div class="card"><h3>دخول زوار</h3><input class="input" id="visitorName" placeholder="اسمك"><button class="btn" onclick="loginVisitor()">دخول</button></div>
 </div>
 
-<div id="roomsPage" class="page"><div class="header"><span>الغرف</span><button class="icon-btn" onclick="logout()">🚪</button></div><div id="roomsList" style="padding:10px"></div></div>
+<div id="roomsPage" class="page"><div class="header"><span>الغرف</span></div><div id="roomsList" style="padding:10px;overflow-y:auto;flex:1"></div></div>
 
 <div id="chatPage" class="page">
   <div class="header"><button class="icon-btn" onclick="goRooms()">←</button><span id="roomName"></span></div>
   <div class="radio-bar"><button class="icon-btn" id="playBtn" onclick="toggleRadio()">▶️</button><span>إذاعة اليمن</span><audio id="radioPlayer" src="https://stream.zeno.fm/0r0a792kwz8uv"></audio></div>
   <div class="chat" id="chatBox"></div>
-  <div class="input-bar"><input id="msgInput" class="input" placeholder="اكتب..."><button class="icon-btn" onclick="sendMsg()">✈️</button></div>
+  <div class="input-bar">
+    <input id="msgInput" class="input" placeholder="اكتب..." onkeypress="if(event.key==='Enter') sendMsg()">
+    <button class="icon-btn" onclick="sendMsg()">ارسال</button>
+  </div>
 </div>
 
 <script>
 const API = window.location.origin;
-const socket = io(API, {transports: ['websocket', 'polling']}); // هذا اللي كان معطل الدنيا
-let currentUser={}, currentRoom='العامة', selectedGender='male';
-const ranks={visitor:{emoji:"🤖",class:"rank-visitor"},member:{emoji:"👤",class:"rank-member"},owner:{emoji:"👑",class:"rank-owner"}};
+const socket = io(API, {transports: ['websocket', 'polling']});
+let currentUser={}, currentRoom='العامة';
 
-function setStatus(msg,color="#FF5722"){document.getElementById('status').innerText=msg;document.getElementById('status').style.background=color;}
-function setGender(g){selectedGender=g;document.querySelectorAll('.gender-btn').forEach(b=>b.classList.remove('active'));document.querySelector('.gender-'+g).classList.add('active');}
-function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
-
-socket.on('connect',()=>setStatus("متصل ✅","#4CAF50"));
-socket.on('connect_error',()=>setStatus("السيرفر نايم... انتظر 30ث","#FF5722"));
+socket.on('connect',()=>document.getElementById('status').innerText="متصل ✅");
 
 async function loginVisitor(){
 let name=document.getElementById('visitorName').value;if(!name) return alert("اكتب اسمك");
-currentUser={name,rank:'visitor',gender:selectedGender};
+currentUser={name,rank:'visitor',gender:'male'};
 socket.emit('join',currentUser);
 goRooms();
 }
 
 function goRooms(){showPage('roomsPage');loadRooms();}
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
 function loadRooms(){let rooms=['العامة','اليمن','الجزائر','مصر'];document.getElementById('roomsList').innerHTML=rooms.map(r=>`<div class="room"><div>🌎 ${r}</div><button class="btn" onclick="enterRoom('${r}')">دخول</button></div>`).join('');}
 function enterRoom(room){currentRoom=room;socket.emit('joinRoom',room);showPage('chatPage');document.getElementById('roomName').innerText=room;}
 
 function toggleRadio(){let p=document.getElementById('radioPlayer');let b=document.getElementById('playBtn');if(p.paused){p.play();b.innerText='⏸️';}else{p.pause();b.innerText='▶️';}}
 
-socket.on('newMsg', (msg)=>{if(msg.room!=currentRoom) return;document.getElementById('chatBox').innerHTML+=`<div class="msg"><div class="avatar ${msg.gender}"></div><div><b>${ranks[msg.senderRank]?.emoji} ${msg.sender}</b><div>${msg.text}</div></div></div>`;document.getElementById('chatBox').scrollTop=99999;});
+socket.on('newMsg', (msg)=>{if(msg.room!=currentRoom) return;document.getElementById('chatBox').innerHTML+=`<div class="msg"><div class="avatar"></div><div><b>${msg.sender}</b><div>${msg.text}</div></div></div>`;document.getElementById('chatBox').scrollTop=99999;});
 
 function sendMsg(){let txt=document.getElementById('msgInput').value;if(!txt) return;socket.emit('sendMsg',{room:currentRoom,sender:currentUser.name,senderRank:currentUser.rank,gender:currentUser.gender,text:txt});document.getElementById('msgInput').value="";}
-async function logout(){await fetch(API+'/logout',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(currentUser)});location.reload();}
 </script>
 </body>
 </html>
