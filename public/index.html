@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>شات اليمن 5.4</title>
+<title>شات اليمن 5.5</title>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -11,15 +11,17 @@
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
 .page{display:none;height:100%;flex-direction:column}.active{display:flex}
 .header{background:linear-gradient(90deg,var(--primary),var(--secondary));padding:12px;display:flex;justify-content:space-between;color:#000;font-weight:bold}
-.card{background:var(--card);padding:15px;border-radius:12px;margin:10px}
 .input{flex:1;padding:12px;border-radius:8px;border:1px solid #444;background:#222;color:#fff;font-size:16px}
-.btn{padding:12px 20px;border:none;border-radius:8px;background:linear-gradient(90deg,var(--primary),var(--secondary));color:#000;font-weight:bold;cursor:pointer;font-size:16px}
-.room{padding:15px;background:var(--card);border-radius:10px;margin:8px 0;text-align:center}
+.btn{padding:12px 15px;border:none;border-radius:8px;background:linear-gradient(90deg,var(--primary),var(--secondary));color:#000;font-weight:bold;cursor:pointer;font-size:14px}
 .chat{flex:1;overflow-y:auto;padding:10px;background:#111}
 .msg{display:flex;gap:8px;margin:8px 0}
 .avatar{width:40px;height:40px;border-radius:50%;border:2px solid #2196F3}
 .input-bar{display:flex;gap:8px;padding:10px;background:var(--card);border-top:1px solid #333}
 .radio-bar{padding:8px;background:#222;display:flex;gap:10px;align-items:center}
+.icon-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--primary)}
+.users-list{position:fixed;right:0;top:0;bottom:0;width:280px;background:var(--card);transform:translateX(100%);transition:0.3s;z-index:99}
+.users-list.show{transform:translateX(0)}
+.user-item{padding:10px;border-bottom:1px solid #333;cursor:pointer}
 #status{position:fixed;bottom:80px;left:10px;background:#4CAF50;color:#fff;padding:5px 10px;border-radius:5px;font-size:12px}
 </style>
 </head>
@@ -27,20 +29,26 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
 <div id="status">متصل ✅</div>
 
 <div id="loginPage" class="page active">
-  <h2 style="text-align:center;color:var(--primary);margin:20px 0">شات اليمن 5.4 🇾🇪</h2>
+  <h2 style="text-align:center;color:var(--primary);margin:20px 0">شات اليمن 5.5 🇾🇪</h2>
   <div class="card"><input class="input" id="visitorName" placeholder="اكتب اسمك" style="margin-bottom:10px"><button class="btn" style="width:100%" onclick="loginVisitor()">دخول زائر</button></div>
 </div>
 
 <div id="roomsPage" class="page"><div class="header"><span>اختر غرفة</span></div><div id="roomsList" style="padding:10px;flex:1;overflow-y:auto"></div></div>
 
 <div id="chatPage" class="page">
-  <div class="header"><button class="btn" onclick="goRooms()">← رجوع</button><span id="roomName"></span></div>
+  <div class="header"><button class="btn" onclick="goRooms()">← رجوع</button><span id="roomName"></span><button class="btn" onclick="toggleUsers()">👥</button></div>
   <div class="radio-bar"><button class="btn" id="playBtn" onclick="toggleRadio()">▶️ تشغيل</button><span>إذاعة اليمن</span><audio id="radioPlayer" src="https://stream.zeno.fm/0r0a792kwz8uv"></audio></div>
   <div class="chat" id="chatBox"></div>
   <div class="input-bar">
+    <button class="icon-btn" onclick="uploadImg()">+</button>
     <input id="msgInput" class="input" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter') sendMsg()">
     <button class="btn" onclick="sendMsg()">ارسال</button>
   </div>
+</div>
+
+<div id="usersList" class="users-list">
+  <div class="header"><span>المتواجدين</span><button class="btn" onclick="toggleUsers()">X</button></div>
+  <div id="usersBox"></div>
 </div>
 
 <script>
@@ -59,10 +67,23 @@ goRooms();
 
 function goRooms(){showPage('roomsPage');loadRooms();}
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
-function loadRooms(){let rooms=['العامة','اليمن','الجزائر','مصر'];document.getElementById('roomsList').innerHTML=rooms.map(r=>`<div class="room"><b>${r}</b><button class="btn" style="margin-top:8px;width:100%" onclick="enterRoom('${r}')">دخول الغرفة</button></div>`).join('');}
-function enterRoom(room){currentRoom=room;socket.emit('joinRoom',room);showPage('chatPage');document.getElementById('roomName').innerText=room;}
+function loadRooms(){let rooms=['العامة','اليمن','الجزائر','مصر'];document.getElementById('roomsList').innerHTML=rooms.map(r=>`<div class="card"><b>${r}</b><button class="btn" style="margin-top:8px;width:100%" onclick="enterRoom('${r}')">دخول</button></div>`).join('');}
+function enterRoom(room){currentRoom=room;socket.emit('joinRoom',room);showPage('chatPage');document.getElementById('roomName').innerText=room;loadUsers();}
 
 function toggleRadio(){let p=document.getElementById('radioPlayer');let b=document.getElementById('playBtn');if(p.paused){p.play();b.innerText='⏸️ ايقاف';}else{p.pause();b.innerText='▶️ تشغيل';}}
+function toggleUsers(){document.getElementById('usersList').classList.toggle('show');}
+
+async function loadUsers(){let res=await fetch(API+'/users');let users=await res.json();document.getElementById('usersBox').innerHTML=users.map(u=>`<div class="user-item" onclick="alert('الخاص جاي بالاصدار الجاي')">${u.name}</div>`).join('');}
+
+async function uploadImg(){
+let i=document.createElement('input');i.type='file';i.accept='image/*';
+i.onchange=async e=>{
+let f=new FormData();f.append('file',e.target.files[0]);
+let r=await fetch(API+'/upload',{method:"POST",body:f});
+let d=await r.json();
+sendMsg(`<img src="${API+d.url}" style="max-width:200px;border-radius:10px">`)
+};i.click();
+}
 
 socket.on('newMsg', (msg)=>{if(msg.room!=currentRoom) return;document.getElementById('chatBox').innerHTML+=`<div class="msg"><div class="avatar"></div><div><b style="color:var(--primary)">${msg.sender}</b><div>${msg.text}</div></div></div>`;document.getElementById('chatBox').scrollTop=99999;});
 
