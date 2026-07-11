@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>شات اليمن 6.1</title>
+<title>شات اليمن 6.3</title>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -22,7 +22,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
 .icon-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--primary)}
 .users-list{position:fixed;right:0;top:0;bottom:0;width:280px;background:var(--card);transform:translateX(100%);transition:0.3s;z-index:99}
 .users-list.show{transform:translateX(0)}
-.user-item{padding:10px;border-bottom:1px solid #333}
+.user-item{padding:10px;border-bottom:1px solid #333;cursor:pointer}
 #status{position:fixed;bottom:80px;left:10px;background:#4CAF50;color:#fff;padding:5px 10px;border-radius:5px;font-size:12px;z-index:999}
 .tabs{display:flex;gap:5px;margin-bottom:10px}
 .tab{flex:1;text-align:center;padding:8px;background:#333;border-radius:5px;cursor:pointer}
@@ -34,13 +34,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
 <div id="status">متصل ✅</div>
 
 <div id="loginPage" class="page active">
-  <h2 style="text-align:center;color:var(--primary);margin:20px 0">شات اليمن 6.1 🇾🇪</h2>
+  <h2 style="text-align:center;color:var(--primary);margin:20px 0">شات اليمن 6.3 🇾🇪</h2>
   <div class="card">
-    <div class="tabs">
-      <div class="tab active" onclick="showTab('visitor')">زائر</div>
-      <div class="tab" onclick="showTab('login')">دخول</div>
-      <div class="tab" onclick="showTab('register')">تسجيل</div>
-    </div>
+    <div class="tabs"><div class="tab active" onclick="showTab('visitor')">زائر</div><div class="tab" onclick="showTab('login')">دخول</div><div class="tab" onclick="showTab('register')">تسجيل</div></div>
     <div id="visitorTab"><input class="input" id="visitorName" placeholder="اكتب اسمك"><button class="btn" onclick="loginVisitor()">دخول زائر</button></div>
     <div id="loginTab" style="display:none"><input class="input" id="loginName" placeholder="الاسم"><input class="input" id="loginPass" type="password" placeholder="كلمة السر"><button class="btn" onclick="loginUser()">دخول</button></div>
     <div id="registerTab" style="display:none"><input class="input" id="regName" placeholder="الاسم الجديد"><input class="input" id="regPass" type="password" placeholder="كلمة السر"><button class="btn" onclick="registerUser()">تسجيل</button></div>
@@ -54,35 +50,28 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
   <div class="radio-bar"><button class="btn" style="width:auto" id="playBtn" onclick="toggleRadio()">▶️ تشغيل</button><span>إذاعة اليمن</span><audio id="radioPlayer" src="https://stream.zeno.fm/0r0a792kwz8uv"></audio></div>
   <div class="chat" id="chatBox"></div>
   <button class="btn" onclick="openShop()">🛒 المتجر - الكوينز: <span id="myCoins">0</span></button>
-  <div class="input-bar">
-    <button class="icon-btn" onclick="uploadImg()">+</button>
-    <input id="msgInput" class="input" style="margin:0" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter') sendMsg()">
-    <button class="btn" style="width:auto" onclick="sendMsg()">ارسال</button>
-  </div>
+  <button class="btn" onclick="openGifts()">🎁 الهدايا</button>
+  <button class="btn" id="adminBtn" style="display:none;background:#f00" onclick="openAdmin()">⚙️ لوحة الادارة</button>
+  <div class="input-bar"><button class="icon-btn" onclick="uploadImg()">+</button><input id="msgInput" class="input" style="margin:0" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter') sendMsg()"><button class="btn" style="width:auto" onclick="sendMsg()">ارسال</button></div>
 </div>
 
-<div id="shopBox" class="shop-popup">
-  <h3 style="color:var(--primary);margin-bottom:10px">المتجر</h3>
-  <div id="shopItems"></div>
-  <button class="btn" style="background:#f00" onclick="document.getElementById('shopBox').style.display='none'">اغلاق</button>
-</div>
+<div id="shopBox" class="shop-popup"><h3 style="color:var(--primary);margin-bottom:10px">المتجر</h3><div id="shopItems"></div><button class="btn" style="background:#f00" onclick="document.getElementById('shopBox').style.display='none'">اغلاق</button></div>
+<div id="giftsBox" class="shop-popup"><h3 style="color:var(--primary)">ارسال هدية ل: <span id="giftTo"></span></h3><div id="giftsList"></div><button class="btn" style="background:#f00" onclick="document.getElementById('giftsBox').style.display='none'">اغلاق</button></div>
+<div id="adminBox" class="shop-popup"><h3 style="color:#f00">لوحة الادارة</h3><select id="adminTarget" class="input"></select><button class="btn" onclick="adminAction('kick')">كتم</button><button class="btn" onclick="adminAction('unmute')">فك الكتم</button><button class="btn" onclick="adminAction('addCoins')">اعطاء 1000 كوين</button><button class="btn" style="background:#f00" onclick="document.getElementById('adminBox').style.display='none'">اغلاق</button></div>
 
-<div id="usersList" class="users-list">
-  <div class="header"><span>المتواجدين</span><button class="btn" style="width:auto" onclick="toggleUsers()">X</button></div>
-  <div id="usersBox"></div>
-</div>
+<div id="usersList" class="users-list"><div class="header"><span>المتواجدين</span><button class="btn" style="width:auto" onclick="toggleUsers()">X</button></div><div id="usersBox"></div></div>
 
 <script>
 const API = window.location.origin;
 const socket = io(API, {transports: ['websocket', 'polling']});
-let currentUser={}, currentRoom='العامة';
+let currentUser={}, currentRoom='العامة', giftTarget='';
 
-socket.on('connect',()=>document.getElementById('status').innerText="متصل ✅");
+socket.on('connect',()=>{document.getElementById('status').innerText="متصل ✅"; if(currentUser.rank === 'admin') document.getElementById('adminBtn').style.display='block';});
 function showTab(tab){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('#visitorTab,#loginTab,#registerTab').forEach(d=>d.style.display='none');event.target.classList.add('active');document.getElementById(tab+'Tab').style.display='block';}
 
 async function loginVisitor(){let name=document.getElementById('visitorName').value;if(!name) return alert("اكتب اسمك");currentUser={name,rank:'visitor',coins:0,color:'#FFF'};socket.emit('join',currentUser);goRooms();}
 async function registerUser(){let name=document.getElementById('regName').value;let pass=document.getElementById('regPass').value;if(!name||!pass) return alert("كمل البيانات");let r=await fetch(API+'/register',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,pass})});let d=await r.json();if(d.error) return alert(d.error);alert("تم التسجيل بنجاح");showTab('login');}
-async function loginUser(){let name=document.getElementById('loginName').value;let pass=document.getElementById('loginPass').value;let r=await fetch(API+'/login',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,pass})});if(!r.ok) return alert("خطأ في الدخول");currentUser=await r.json();socket.emit('join',currentUser);goRooms();}
+async function loginUser(){let name=document.getElementById('loginName').value;let pass=document.getElementById('loginPass').value;let r=await fetch(API+'/login',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,pass})});if(!r.ok) return alert("خطأ في الدخول");currentUser=await r.json();socket.emit('join',currentUser);if(currentUser.rank === 'admin') document.getElementById('adminBtn').style.display='block';goRooms();}
 
 function goRooms(){showPage('roomsPage');loadRooms();}
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
@@ -91,16 +80,26 @@ function enterRoom(room){currentRoom=room;socket.emit('joinRoom',room);showPage(
 
 function toggleRadio(){let p=document.getElementById('radioPlayer');let b=document.getElementById('playBtn');if(p.paused){p.play();b.innerText='⏸️ ايقاف';}else{p.pause();b.innerText='▶️ تشغيل';}}
 function toggleUsers(){document.getElementById('usersList').classList.toggle('show');}
-async function loadUsers(){let res=await fetch(API+'/users');let users=await res.json();document.getElementById('usersBox').innerHTML=users.map(u=>`<div class="user-item" style="color:${u.color}">${u.name} [${u.rank}]</div>`).join('');}
+async function loadUsers(){let res=await fetch(API+'/users');let users=await res.json();document.getElementById('usersBox').innerHTML=users.map(u=>`<div class="user-item" style="color:${u.color}" onclick="selectUser('${u.name}')">${u.name} [${u.rank}]</div>`).join('');}
 
 // المتجر
 function openShop(){document.getElementById('myCoins').innerText = currentUser.coins;fetch(API+'/shop').then(r=>r.json()).then(items=>{document.getElementById('shopItems').innerHTML = Object.keys(items).map(key=>{let i = items[key];return `<div class="card"><b>${i.name}</b> - ${i.price} كوين <button class="btn" onclick="buyItem('${key}')">شراء</button></div>`}).join('');document.getElementById('shopBox').style.display='block';})}
 async function buyItem(item){let r = await fetch(API+'/buy',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:currentUser.name,item})});let d = await r.json();if(d.error) return alert(d.error);currentUser = d;alert("تم الشراء بنجاح");openShop();}
 
+// الهدايا
+function selectUser(name){giftTarget = name; openGifts();}
+function openGifts(){if(!giftTarget) return alert("اختر شخص من قائمة المتواجدين اول");fetch(API+'/gifts').then(r=>r.json()).then(g=>{document.getElementById('giftTo').innerText=giftTarget;document.getElementById('giftsList').innerHTML = Object.keys(g).map(key=>{let i=g[key];return `<div class="card"><b>${i.name}</b> - ${i.price} كوين <button class="btn" onclick="sendGift('${key}')">ارسال</button></div>`}).join('');document.getElementById('giftsBox').style.display='block';})}
+async function sendGift(gift){let r=await fetch(API+'/sendGift',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({from:currentUser.name,to:giftTarget,gift})});let d=await r.json();if(d.error) return alert(d.error);alert("تم ارسال الهدية");document.getElementById('giftsBox').style.display='none';}
+
+// الادارة
+function openAdmin(){fetch(API+'/users').then(r=>r.json()).then(u=>{document.getElementById('adminTarget').innerHTML=u.map(x=>`<option>${x.name}</option>`).join('');document.getElementById('adminBox').style.display='block';})}
+async function adminAction(action){let target=document.getElementById('adminTarget').value;let r=await fetch(API+'/admin',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({admin:currentUser.name,target,action})});alert("تم");}
+
 // رفع الصور
 async function uploadImg(){let i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange= async e=>{document.getElementById('status').innerText="جاري رفع الصورة...";let file = e.target.files[0];let reader = new FileReader();reader.onload = async () => {let r = await fetch(API+'/upload',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data: reader.result})});let d = await r.json();if(d.url){sendMsg(`<img src="${d.url}" style="max-width:200px;border-radius:10px">`)}else{alert("فشل الرفع")};document.getElementById('status').innerText="متصل ✅"};reader.readAsDataURL(file)};i.click();}
 
 socket.on('newMsg', (msg)=>{if(msg.room!=currentRoom) return;let color = msg.color || '#FFFFFF';document.getElementById('chatBox').innerHTML+=`<div class="msg"><div class="avatar"></div><div><b style="color:${color}">${msg.sender} [${msg.senderRank}]</b><div>${msg.text}</div></div></div>`;document.getElementById('chatBox').scrollTop=99999;});
+socket.on('gift', (data)=>{document.getElementById('chatBox').innerHTML+=`<div class="msg" style="text-align:center;color:var(--primary)"><b>🎁 ${data.from} ارسل ${data.gift} الى ${data.to}</b></div>`;});
 function sendMsg(){let txt=document.getElementById('msgInput').value;if(!txt) return;socket.emit('sendMsg',{room:currentRoom,sender:currentUser.name,senderRank:currentUser.rank,color:currentUser.color,text:txt});document.getElementById('msgInput').value="";}
 </script>
 </body>
