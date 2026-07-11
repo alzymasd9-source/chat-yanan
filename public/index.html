@@ -1,234 +1,66 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>شات اليمن | شات اليمن العربي</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&family=Cairo&family=Amiri&display=swap" rel="stylesheet">
+<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
+<title>شات اليمن المطور | الدردشة اليمنية</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
-:root{--main:#0f414e;--green:#74b20e;--chat-bg:#e5ddd5;--msg-me:#dcf8c6;--msg-other:#fff;--user-font:'Tajawal';--user-color:#000}
-*{margin:0;padding:0;box-sizing:border-box;font-family:var(--user-font),sans-serif;color:var(--user-color)}
-body{background:#ededed}button{cursor:pointer;border:none}.hide{display:none!important}
-.header{background:var(--main);padding:10px;text-align:center}.header>a{color:#fff;font-size:28px;font-weight:700;text-decoration:none}.header>b{display:block;color:#ccc;font-size:14px;font-weight:400}
-.main{background:#00242e url(https://i.imgur.com/8KmCThn.jpg) no-repeat center fixed;background-size:cover;min-height:80vh;padding:20px}
-.container{max-width:1050px;margin:auto;text-align:center}
-.room{margin:60px auto;max-width:500px;background:rgba(255,255,255,.9);border-radius:15px;padding:20px}
-.btn{display:inline-block;margin:10px 5px;color:#fff;background:var(--main);padding:12px 25px;border-radius:10px;font-size:17px;font-weight:700;cursor:pointer}
-#guest_btn{background:var(--green)}.login{display:none;background:rgba(249,249,249,.95);width:360px;max-width:95%;border-radius:15px;margin:20px auto;padding:20px;box-shadow:0 5px 20px rgba(0,0,0,.1)}
-.login input{width:100%;padding:12px;text-align:center;font-size:18px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px}
-.gendiv{display:flex;justify-content:center;gap:30px;margin:15px}.male{color:#06f}.female{color:#e13}
-.error{display:none;margin:10px auto;padding:10px;background:#fff0f0;color:red;border-radius:8px;border:1px solid red;max-width:360px}
-#chat_app{display:none;height:100vh;max-width:1200px;margin:auto;background:#fff}
-.chat-layout{display:flex;height:100%}.sidebar{width:320px;border-left:1px solid #ddd;display:flex;flex-direction:column;background:#f5f6f6}
-.sidebar-header{background:var(--main);color:#fff;padding:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
-.settings-btn{background:rgba(255,255,255,.2);color:#fff;padding:5px 10px;border-radius:6px;font-size:13px;margin-right:5px}
-.room-tabs{display:flex;background:#e9edef}.room-tab{flex:1;padding:10px;text-align:center;font-size:14px;cursor:pointer;border-bottom:2px solid transparent}
-.room-tab.active{background:#fff;border-color:var(--green);font-weight:700}
-.users-list{flex:1;overflow-y:auto}.user-item{padding:10px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #eee;cursor:pointer}
-.user-item:hover,.user-item.pm-active{background:#e0e0e0}.user-item.muted{opacity:.5}
-.user-avatar{width:40px;height:40px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:700;flex-shrink:0}
-.admin-tag{font-size:10px;background:gold;color:#000;padding:2px 5px;border-radius:4px;margin-right:5px}
-.pm-badge{background:red;color:#fff;font-size:11px;padding:2px 6px;border-radius:10px;margin-right:auto}
-.admin-btns{display:flex;gap:5px;margin-right:auto}.admin-btns i{font-size:16px;color:#888;padding:5px;cursor:pointer}.admin-btns i:hover{color:red}
-.chat-area{flex:1;display:flex;flex-direction:column;background:var(--chat-bg)}
-.chat-header{background:var(--main);color:#fff;padding:12px 15px;display:flex;justify-content:space-between;align-items:center}
-.chat-header h4{font-size:17px;color:#fff}.logout-btn{background:rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:6px;font-size:14px}
-.messages{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
-.msg{max-width:75%;padding:8px 12px;border-radius:8px;line-height:1.6;word-wrap:break-word}
-.msg.me{background:var(--msg-me);align-self:flex-start}.msg.other{background:var(--msg-other);align-self:flex-end;box-shadow:0 1px 1px rgba(0,0,0,.1)}
-.msg.pm{border:2px dashed var(--green)}.msg.name{font-size:13px;font-weight:700;margin-bottom:4px}
-.msg audio{width:220px;max-width:100%;margin-top:5px}.msg img.chat-img{max-width:200px;max-height:200px;border-radius:8px;margin-top:5px;cursor:pointer}
-.msg.time{font-size:11px;color:#667781;text-align:left;margin-top:3px}
-.chat-input{background:#f0f0f0;padding:10px;display:flex;gap:8px;align-items:center;position:relative}
-.chat-input input{flex:1;padding:12px 15px;border-radius:20px;border:none;outline:none;font-size:16px}
-.chat-input input:disabled{background:#ddd}.chat-input button{width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;font-size:18px;flex-shrink:0}
-.chat-input button:disabled{background:#aaa;cursor:not-allowed}.icon-btn{background:#fff!important;color:#555!important}
-.recording{background:red!important;animation:pulse 1s infinite}@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
-.popup{position:absolute;bottom:60px;background:#fff;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,.2);padding:10px;z-index:5}
-.emoji-box{left:10px;width:280px;height:200px;overflow-y:auto}.emoji-box span{font-size:24px;padding:5px;cursor:pointer}
-.settings-box{left:10px;width:260px;max-height:300px;overflow-y:auto;text-align:right}
-.color-picker span{width:25px;height:25px;display:inline-block;border-radius:50%;margin:5px;cursor:pointer;border:2px solid #ccc}
-.font-picker select{width:100%;padding:8px;border-radius:5px;margin-top:5px}
-@media(max-width:768px){.sidebar{display:none;position:absolute;z-index:10;height:100%;width:85%;box-shadow:2px 0 10px rgba(0,0,0,.2)}.sidebar.active{display:flex}.msg{max-width:85%}}
-</style>
-</head>
-<body>
-<div id="login_page">
-  <div class="header"><a href="/">شات اليمن العربي</a><b>أكبر تجمع يمني</b></div>
-  <div class="main">
-    <div class="container">
-      <div class="error" id="error"></div>
-      <div class="login" id="guest_box">
-        <form id="guest_form">
-          <input type="text" id="guest_username" maxlength="20" placeholder="الاسم المستعار" required>
-          <div class="gendiv">
-            <div><input id="male" type="radio" name="gender" value="1" checked><label for="male" class="male"><span>ذكر</span></label></div>
-            <div><input id="female" type="radio" name="gender" value="2"><label for="female" class="female"><span>أنثى</span></label></div>
-          </div>
-          <input type="submit" class="btn" value="دخول كزائر">
-        </form>
-      </div>
-      <div id="roomid" class="room">
-        <h3>أهلاً بك في شات اليمن</h3>
-        <button class="btn" id="guest_btn"><i class="fa fa-user"></i> دخول الزوار</button>
-      </div>
+:root{--green:#075e54;--light:#dcf8c6}
+body{margin:0;font-family:tahoma;background:#f0f0f0}
+.header{background:var(--green);color:#fff;padding:10px 15px;display:flex;justify-content:space-between;align-items:center}
+.header a{color:#fff;text-decoration:none;font-size:18px;font-weight:bold}
+#wrap{display:flex;height:calc(100vh - 55px)}
+#sidebar{width:280px;background:#fff;border-left:1px solid #ddd;display:flex;flex-direction:column}
+#users_list{flex:1;overflow:auto;padding:10px}
+.user-item{display:flex;align-items:center;padding:8px;border-radius:8px;cursor:pointer;position:relative}
+.user-item:hover{background:#f5f5f5}
+.user-avatar{width:35px;height:35px;border-radius:50%;background:#ccc;display:flex;align-items:center;justify-content:center;margin-left:10px;font-weight:bold}
+.admin-tag{font-size:10px;background:red;color:#fff;padding:2px 5px;border-radius:4px;margin-right:5px}
+#chat_area{flex:1;display:flex;flex-direction:column}
+#messages{flex:1;overflow:auto;padding:10px;background:#e5ddd5}
+.msg{background:#fff;padding:8px 12px;border-radius:7px;margin:5px 0;max-width:70%;position:relative}
+.msg.me{background:var(--light);margin-right:auto}
+.msg .time{font-size:11px;color:#999;text-align:left}
+.msg-actions{position:absolute;left:5px;top:5px;display:none;gap:5px;font-size:14px;cursor:pointer}
+.msg:hover .msg-actions{display:flex}
+.mention-name{cursor:pointer}
+.mention-name:hover{opacity:0.7;text-decoration:underline}
+#chat-input{padding:10px;background:#f0f0f0;display:flex;gap:10px;position:relative}
+#msg_input{flex:1;padding:10px;border:1px solid #ddd;border-radius:20px}
+.btn{background:var(--green);color:#fff;border:none;padding:10px 15px;border-radius:20px;cursor:pointer}
+#reply_box{position:absolute;bottom:55px;left:10px;right:60px;background:#e9edef;padding:8px;border-right:3px solid var(--green);border-radius:5px;font-size:13px;}
+.hide{display:none}
+</style></head><body>
+<div class="header"><a href="/">شات اليمن المطور</a><b>أكبر تجمع يمني</b></div>
+<div id="wrap">
+  <div id="sidebar">
+    <div style="padding:10px;border-bottom:1px solid #ddd"><b>المتصلين</b> <span id="user_count">0</span></div>
+    <div id="users_list"></div>
+  </div>
+  <div id="chat_area">
+    <div id="room_title" style="padding:10px;background:#fff;border-bottom:1px solid #ddd">العام</div>
+    <div id="messages"></div>
+    <div id="chat-input">
+      <div id="reply_box" class="hide"><span id="reply_close" style="float:left;cursor:pointer">×</span><b id="reply_name"></b><div id="reply_text"></div></div>
+      <input id="msg_input" placeholder="اكتب رسالتك...">
+      <button class="btn" onclick="send('text',$('msg_input').value)">ارسال</button>
     </div>
   </div>
 </div>
 
-<div id="chat_app">
-  <div class="chat-layout">
-    <div class="sidebar" id="sidebar">
-      <div class="sidebar-header">المتصلون <span id="online_count">1</span>
-        <div><button class="settings-btn" id="settings_btn"><i class="fa fa-gear"></i></button><button class="settings-btn hide" id="bans_btn"><i class="fa fa-gavel"></i></button></div>
-      </div>
-      <div class="room-tabs">
-        <div class="room-tab active" data-room="عام">عام</div>
-        <div class="room-tab" data-room="تعارف">تعارف</div>
-        <div class="room-tab" data-room="اليمن">اليمن</div>
-        <div class="room-tab" data-room="فلة">فلة</div>
-      </div>
-      <div class="users-list" id="users_list"></div>
-    </div>
-    <div class="chat-area">
-      <div class="chat-header">
-        <button class="logout-btn" id="show_users_btn"><i class="fa fa-users"></i></button>
-        <h4 id="room_title">الدردشة العامة</h4>
-        <button class="logout-btn" id="logout_btn">خروج <i class="fa fa-sign-out-alt"></i></button>
-      </div>
-      <div class="messages" id="messages_box"></div>
-      <form class="chat-input" id="chat_form">
-        <button type="button" class="icon-btn" id="emoji_btn"><i class="fa fa-smile"></i></button>
-        <button type="button" class="icon-btn" id="img_btn"><i class="fa fa-paperclip"></i></button>
-        <button type="button" class="icon-btn" id="mic_btn"><i class="fa fa-microphone"></i></button>
-        <input type="file" id="img_input" accept="image/*" class="hide">
-        <input type="text" id="msg_input" placeholder="اكتب رسالتك...">
-        <button type="submit"><i class="fa fa-paper-plane"></i></button>
-        <div class="popup emoji-box hide" id="emoji_box"></div>
-        <div class="popup settings-box hide" id="settings_box">
-          <h4>الإعدادات</h4><label>لون الخط:</label>
-          <div class="color-picker"><span style="background:#000" data-color="#000"></span><span style="background:#e91e63" data-color="#e91e63"></span><span style="background:#2196f3" data-color="#2196f3"></span><span style="background:#4caf50" data-color="#4caf50"></span></div>
-          <label>نوع الخط:</label><div class="font-picker"><select id="font_select"><option>Tajawal</option><option>Cairo</option><option>Amiri</option></select></div>
-        </div>
-      </form>
-    </div>
+<div id="roomid" class="room" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:999;display:flex;align-items:center;justify-content:center">
+  <div style="text-align:center">
+    <h3>أهلاً بك في شات اليمن المطور</h3>
+    <input id="name_input" placeholder="اسمك">
+    <button class="btn" id="guest_btn">دخول</button>
   </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script defer>
-document.addEventListener('DOMContentLoaded', () => {
-
-const socket = io(window.location.origin, { transports: ["websocket", "polling"] });
-const $ = id => document.getElementById(id);
-
-let currentUser = null, currentRoom = 'عام', pmWith = null, isAdmin = false, myId = null, mediaRecorder, audioChunks = [];
-let localMuted = JSON.parse(localStorage.getItem('mutedUsers') || '[]');
-const EMOJIS = ['😂','❤️','😍','😎','😢','😡','👍','👎','🔥','💯','🙏','😜','🤔','😱','🥰','😇','🤣','😭','💔','🎉','🌹','🌙','🇾🇪'];
-
-// ========== 1. زر دخول الزوار ==========
-$('guest_btn').onclick = () => {
-    $('roomid').style.display = "none";
-    $('guest_box').style.display = "block";
-    clearerr();
-}
-
-// ========== 2. فورم الدخول ==========
-$('guest_form').onsubmit = e => {
-    e.preventDefault();
-    const u = $('guest_username').value.trim();
-    const g = document.querySelector('input[name="gender"]:checked').value;
-    if(!u) return err("اكتب اسمك");
-    currentUser = {name: u, gender: g == 1? 'male' : 'female'};
-    socket.emit('join', currentUser);
-}
-
-// ========== 3. استقبال السيرفر ==========
-socket.on('you are', d => { myId = d.id; isAdmin = d.isAdmin; $('login_page').style.display = 'none'; $('chat_app').style.display = 'block'; if(isAdmin) $('bans_btn').classList.remove('hide'); });
-socket.on('users list', u => { $('users_list').innerHTML = ''; u.forEach(x => addUser(x, x.id === myId)); });
-socket.on('user joined', u => { addUser(u); addMsg('sys', `${u.name} دخل الشات`); });
-socket.on('user left', n => { addMsg('sys', `${n} خرج`); $(`user_${n}`)?.remove(); $('online_count').innerText = $('users_list').children.length; });
-socket.on('message', d => addMsg('usr', d.content, d.user, d.type));
-socket.on('pm message', d => { if(pmWith?.id === d.user.id || d.user.id === myId) addMsg('usr', d.content, d.user, d.type, true); else $(`pm_${d.user.id}`)?.classList.remove('hide'); });
-socket.on('system', m => addMsg('sys', m));
-socket.on('chat history', m => { $('messages_box').innerHTML = ''; m.forEach(x => addMsg('usr', x.content, x.user, x.type)); });
-socket.on('you muted', v => { $('msg_input').disabled = v; $('chat_form button[type="submit"]').disabled = v; v? err("تم كتمك من مشرف") : clearerr(); });
-socket.on('kicked', m => { alert(m); location.reload(); });
-socket.on('banned', m => { alert(m); location.reload(); });
-
-// ========== 4. ارسال رسالة ==========
-function send(type, content) {
-    socket.emit('message', {type: type, content: content, pm: pmWith?.id || null});
-    addMsg('usr', content, currentUser, type, pmWith!== null);
-}
-$('chat_form').onsubmit = e => { e.preventDefault(); const m = $('msg_input').value.trim(); if(m){ send('text', m); $('msg_input').value = ''; } };
-
-// ========== 5. صوت وصورة ==========
-$('mic_btn').onclick = async () => {
-    if(mediaRecorder?.state === 'recording'){ mediaRecorder.stop(); $('mic_btn').classList.remove('recording'); return; }
-    try {
-        const s = await navigator.mediaDevices.getUserMedia({audio: true});
-        mediaRecorder = new MediaRecorder(s); audioChunks = [];
-        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-        mediaRecorder.onstop = () => {
-            const b = new Blob(audioChunks, {type: 'audio/webm'});
-            const f = new FormData(); f.append('audio', b, 'v.webm');
-            fetch('/upload-audio', {method: 'POST', body: f}).then(r => r.json()).then(d => send('audio', d.url));
-            s.getTracks().forEach(t => t.stop());
-        };
-        mediaRecorder.start(); $('mic_btn').classList.add('recording');
-    } catch(e) { err("ارفض المتصفح استخدام المايك"); }
-};
-$('img_btn').onclick = () => $('img_input').click();
-$('img_input').onchange = e => { const f = e.target.files[0]; if(!f) return; const d = new FormData(); d.append('image', f); fetch('/upload', {method: 'POST', body: d}).then(r => r.json()).then(x => send('img', x.url)); };
-
-// ========== 6. ايموجي واعدادات ==========
-$('emoji_btn').onclick = () => $('emoji_box').classList.toggle('hide');
-EMOJIS.forEach(e => { const s = document.createElement('span'); s.innerText = e; s.onclick = () => { $('msg_input').value += e; $('msg_input').focus(); }; $('emoji_box').appendChild(s); });
-$('settings_btn').onclick = () => $('settings_box').classList.toggle('hide');
-document.querySelectorAll('.color-picker span').forEach(s => s.onclick = () => { document.documentElement.style.setProperty('--user-color', s.dataset.color); localStorage.setItem('c', s.dataset.color); socket.emit('save settings', {font: localStorage.getItem('f'), color: s.dataset.color}); });
-$('font_select').onchange = e => { document.documentElement.style.setProperty('--user-font', e.target.value); localStorage.setItem('f', e.target.value); socket.emit('save settings', {font: e.target.value, color: localStorage.getItem('c')}); };
-if(localStorage.getItem('c')) document.documentElement.style.setProperty('--user-color', localStorage.getItem('c'));
-if(localStorage.getItem('f')) document.documentElement.style.setProperty('--user-font', localStorage.getItem('f'));
-
-// ========== 7. دوال المساعدة ==========
-function toggleMute(id){ if(localMuted.includes(id)){ localMuted = localMuted.filter(x => x!== id); $(`user_${id}`).classList.remove('muted'); } else { localMuted.push(id); $(`user_${id}`).classList.add('muted'); } localStorage.setItem('mutedUsers', JSON.stringify(localMuted)); }
-
-function addUser(u, me=false){
-    if($(`user_${u.id}`)) return;
-    const d = document.createElement('div');
-    d.className = 'user-item ' + (localMuted.includes(u.id)? 'muted' : '');
-    d.id = `user_${u.id}`;
-    d.innerHTML = `<div class="user-avatar">${u.name.charAt(0)}</div><div class="user-name"><span class="${u.gender}">${u.name} ${me? '(أنت)' : ''}</span>${u.isAdmin? '<span class="admin-tag">مشرف</span>' : ''}</div><div class="admin-btns">${!me? `<i class="fa fa-volume-mute" title="كتم عندي" onclick="event.stopPropagation();toggleMute('${u.id}')"></i>` : ''}${isAdmin &&!me? `<i class="fa fa-ban" title="كتم عام" onclick="event.stopPropagation();socket.emit('mute user','${u.id}')"></i><i class="fa fa-sign-out" title="طرد" onclick="event.stopPropagation();socket.emit('kick user','${u.id}')"></i><i class="fa fa-gavel" title="بان 24س" onclick="event.stopPropagation();if(confirm('تبند ${u.name} 24 ساعة؟'))socket.emit('ban user',{targetId:'${u.id}',hours:24})"></i><i class="fa fa-lock" title="بان دائم" onclick="event.stopPropagation();if(confirm('تبند ${u.name} دائم؟'))socket.emit('ban user',{targetId:'${u.id}',hours:null})"></i>` : ''}</div><span class="pm-badge hide" id="pm_${u.id}">!</span>`;
-    d.onclick = e => { if(!e.target.closest('.admin-btns')) openPM(u); };
-    $('users_list').appendChild(d);
-    $('online_count').innerText = $('users_list').children.length;
-}
-
-function openPM(u){ if(u.id === myId) return; pmWith = u; document.querySelectorAll('.user-item').forEach(x => x.classList.remove('pm-active')); $(`user_${u.id}`).classList.add('pm-active'); $(`pm_${u.id}`).classList.add('hide'); $('room_title').innerText = `خاص مع: ${u.name}`; $('messages_box').innerHTML = ''; addMsg('sys', `بدأت محادثة خاصة مع ${u.name}`); }
-
-function addMsg(t, c, u = currentUser, ty = 'text', pm = false){
-    if(t === 'usr' && localMuted.includes(u.id)) return;
-    const b = $('messages_box');
-    if(t === 'sys') return b.innerHTML += `<div style="text-align:center;color:#555;font-size:13px;margin:5px 0;">${c}</div>`;
-    const d = document.createElement('div');
-    d.className = `msg ${u.id === myId? 'me' : 'other'} ${pm? 'pm' : ''}`;
-    let i = u.id!== myId? `<div class="name ${u.gender}">${u.name}</div>` : '';
-    i += ty === 'img'? `<img src="${c}" class="chat-img" onclick="window.open(this.src)">` : ty === 'audio'? `<audio src="${c}" controls></audio>` : `<div>${c}</div>`;
-    i += `<div class="time">${new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'})}</div>`;
-    d.innerHTML = i; b.appendChild(d); b.scrollTop = b.scrollHeight;
-}
-
-function err(t){ $('error').style.display = "block"; $('error').innerText = t; }
-function clearerr(){ $('error').style.display = "none"; }
-
-document.querySelectorAll('.room-tab').forEach(t => t.onclick = () => { currentRoom = t.dataset.room; pmWith = null; document.querySelectorAll('.room-tab').forEach(x => x.classList.remove('active')); t.classList.add('active'); $('room_title').innerText = `غرفة: ${currentRoom}`; $('messages_box').innerHTML = ''; socket.emit('joinRoom', currentRoom); });
-$('logout_btn').onclick = () => location.reload();
-$('show_users_btn').onclick = () => $('sidebar').classList.toggle('active');
-$('bans_btn').onclick = () => socket.emit('get bans');
-socket.on('bans list', b => { let h = '<h4>المحظورين</h4>'; for(let i in b){ const x = b[i]; h += `<div style="border-bottom:1px solid #eee;padding:5px 0;">${i}<br>${x.reason}<br>${x.expire? new Date(x.expire).toLocaleString('ar-EG') : 'دائم'}<button onclick="socket.emit('unban ip','${i}')" style="background:red;color:#fff;padding:3px 8px;border-radius:5px;margin-top:5px;">فك</button></div>`; } $('settings_box').innerHTML = h; });
-
-}); // نهاية DOMContentLoaded
+<script>
+const $=id=>document.getElementById(id);
+const socket=io();
+let myId, currentUser, replyToMsg=null, lastMentioned=null;
+$('guest_btn').onclick=()=>{const name=$('name_input').value; if(!name)return; currentUser={name,gender:'male'}; socket.emit('join',currentUser); $('roomid').classList.add('hide');}
+socket.on('you are',d=>{myId=d.id;});
+function mentionUser(name){lastMentioned=name; $('msg_input').value=`${name} `; $('msg_input').focus();}
+function send(type,content){socket.emit('message',{type,content,mention:lastMentioned,replyTo:replyToMsg}); lastMentioned=null; replyToMsg=null; $('reply_box').classList.add('hide'); $('msg_input').value='';}
 </script>
-</body>
-</html>
+</body></html>
