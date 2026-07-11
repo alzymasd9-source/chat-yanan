@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>شات اليمن المطور</title>
 <style>
 :root{--green:#075e54;--blue:#2196F3;--pink:#E91E63;--gray:#9E9E9E;--dark:#2a2a2a}
@@ -17,59 +16,35 @@ body{background:#e5ddd5;height:100vh;overflow:hidden}
 .gender-btn{padding:12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;background:#fff;min-width:90px}
 .gender-options{position:absolute;top:100%;left:0;background:#fff;border:1px solid #ddd;border-radius:8px;display:none;z-index:10;width:100%}
 .btn-main{background:var(--green);color:#fff;border:none;padding:12px;width:100%;border-radius:8px;cursor:pointer;margin-top:10px}
-
-/* الشريط العلوي */
 .topbar{height:50px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 10px}
-.topbar .left, .topbar .right{display:flex;gap:15px;align-items:center}
+.topbar.left,.topbar.right{display:flex;gap:15px;align-items:center}
 .topbar button{background:none;border:none;color:#fff;font-size:20px;cursor:pointer}
-
-/* منطقة الشات */
 #chatArea{display:none;height:100vh;flex-direction:column}
 .chat-body{flex:1;display:flex}
 #messages{flex:1;overflow:auto;padding:10px;background:#e5ddd5}
-
-/* هيكل الرسالة */
 .msg{display:flex;gap:10px;margin:10px 0;align-items:flex-start}
 .avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold}
 .msg-content{flex:1;background:#fff;padding:8px 12px;border-radius:8px;position:relative}
 .msg-name{font-weight:bold;margin-bottom:3px}
-.msg-text{word-wrap:break-word}
 .msg-time{font-size:11px;color:#999;margin-top:3px}
-.msg-options{position:absolute;top:5px;left:5px;cursor:pointer}
 .system-msg{text-align:center;color:#666;font-size:14px;margin:8px 0}
-.msg-boxed .msg-name{background:#ffeb3b;padding:2px 8px;border-radius:5px;display:inline-block}
-
-/* شريط الكتابة */
 .input-area{height:60px;background:#f0f0f0;display:flex;align-items:center;padding:0 10px;gap:10px}
-.input-area button{background:none;border:none;font-size:22px;cursor:pointer}
 .input-area input{flex:1;padding:10px;border-radius:20px;border:1px solid #ddd}
-
-/* الشريط السفلي */
 .bottombar{height:50px;background:var(--dark);color:#fff;display:flex;justify-content:space-around;align-items:center}
 .bottombar button{background:none;border:none;color:#fff;font-size:20px;cursor:pointer}
-
-/* القوائم الجانبية */
 .sidebar{position:fixed;top:50px;right:-300px;width:300px;height:calc(100% - 100px);background:#fff;transition:0.3s;z-index:99;padding:15px;overflow:auto}
 .sidebar.open{right:0}
-.users-list .user-item{display:flex;align-items:center;gap:10px;padding:8px;cursor:pointer}
-.users-list .user-item:hover{background:#f0f0f0}
-
-/* صندوق الابلاغ */
-.report-box{background:#ffebee;padding:10px;margin:5px 0;border-radius:8px}
-.report-box img{width:40px;height:40px;border-radius:50%}
 .hide{display:none}
 </style>
 </head>
 <body>
 
-<!-- الصفحة الرئيسية -->
 <div class="main-menu" id="mainMenu">
   <button class="menu-btn" onclick="openPopup('guest')">1- دخول زوار</button>
   <button class="menu-btn" onclick="openPopup('login')">2- دخول الأعضاء</button>
   <button class="menu-btn" onclick="openPopup('register')">3- تسجيل</button>
 </div>
 
-<!-- نوافذ الدخول والتسجيل نفس اللي قبل -->
 <div class="popup" id="guestPopup"><div class="popup-box"><span onclick="closePopup('guest')" style="float:left;cursor:pointer">&times;</span><h3>دخول زائر</h3>
 <div class="input-group"><input id="guestName" placeholder="اسم المستخدم"><div class="gender-dropdown"><div class="gender-btn" id="guestGenderBtn" onclick="toggleGender('guest')">الجنس</div><div class="gender-options" id="guestGenderOptions"><div onclick="setGender('guest','male')" style="background:#2196F3;color:#fff;padding:10px">ذكر</div><div onclick="setGender('guest','female')" style="background:#E91E63;color:#fff;padding:10px">انثى</div><div onclick="setGender('guest','other')" style="background:#9E9E9E;color:#fff;padding:10px">آخر</div></div></div></div><button class="btn-main" onclick="guestLogin()">دخول</button></div></div>
 
@@ -77,7 +52,6 @@ body{background:#e5ddd5;height:100vh;overflow:hidden}
 
 <div class="popup" id="registerPopup"><div class="popup-box"><span onclick="closePopup('register')" style="float:left;cursor:pointer">&times;</span><h3>انشاء حساب</h3><div class="input-group"><input id="regName" placeholder="اسم العضو"><div class="gender-dropdown"><div class="gender-btn" id="regGenderBtn" onclick="toggleGender('reg')">الجنس</div><div class="gender-options" id="regGenderOptions"><div onclick="setRegGender('male')" style="background:#2196F3;color:#fff;padding:10px">ذكر</div><div onclick="setRegGender('female')" style="background:#E91E63;color:#fff;padding:10px">انثى</div><div onclick="setRegGender('other')" style="background:#9E9E9E;color:#fff;padding:10px">آخر</div></div></div></div><input id="regPass" type="password" placeholder="كلمة السر"><input id="regPass2" type="password" placeholder="تأكيد كلمة السر"><input id="regEmail" placeholder="البريد الالكتروني - اختياري"><input id="regAge" type="number" placeholder="العمر"><button class="btn-main" onclick="register()">انشاء حساب</button></div></div>
 
-<!-- قائمة الغرف -->
 <div id="roomsList" class="hide" style="padding:20px;background:linear-gradient(135deg,#075e54,#128c7e);height:100%">
 <h2 style="text-align:center;color:#fff">اختر الغرفة</h2>
 <div onclick="joinRoom('عام')" style="background:#fff;margin:10px;padding:15px;border-radius:10px;text-align:center;cursor:pointer">🌎 غرفة العامة 🌎<br><small>اضغط هنا للدخول</small></div>
@@ -86,60 +60,45 @@ body{background:#e5ddd5;height:100vh;overflow:hidden}
 <div onclick="joinRoom('مصر')" style="background:#fff;margin:10px;padding:15px;border-radius:10px;text-align:center;cursor:pointer">🌎 غرفة مصر 🌎<br><small>اضغط هنا للدخول</small></div>
 </div>
 
-<!-- منطقة الشات الكاملة -->
 <div id="chatArea">
-  <!-- 1. الشريط العلوي -->
   <div class="topbar">
     <div class="left">
       <button onclick="toggleSidebar('menu')">☰</button>
       <button onclick="openStore()">🛒</button>
       <button onclick="openPrivate()">✉️</button>
       <button onclick="toggleSidebar('users')">👥</button>
-      <button onclick="openLikes()">❤️</button>
-      <button onclick="openReports()" id="reportBtn" class="hide">📭</button>
     </div>
     <div>شات اليمن المطور</div>
-    <div class="right">
-      <button onclick="openProfile()">👤</button>
-    </div>
+    <div class="right"><button onclick="openProfile()">👤</button></div>
   </div>
 
   <div class="chat-body">
-    <!-- منطقة الرسائل -->
     <div id="messages"></div>
-    
-    <!-- قائمة المستخدمين الجانبية -->
-    <div class="sidebar" id="usersSidebar">
-      <input placeholder="بحث عن عضو" style="width:100%;padding:8px;margin-bottom:10px">
-      <div class="users-list" id="usersList"></div>
-    </div>
-    
-    <!-- قائمة جانبية -->
-    <div class="sidebar" id="menuSidebar">
-      <button class="btn-main">الاخبار</button>
-      <button class="btn-main">حائط الاصدقاء</button>
-      <button class="btn-main">المتجر</button>
-      <button class="btn-main">شراء رصيد</button>
-    </div>
+    <div class="sidebar" id="usersSidebar"><h3>المتواجدين</h3><div id="usersList"></div></div>
+    <div class="sidebar" id="menuSidebar"><button class="btn-main">الاخبار</button><button class="btn-main">المتجر</button></div>
   </div>
 
-  <!-- 2. شريط الكتابة -->
   <div class="input-area">
-    <button onclick="openAddons()">+</button>
-    <button onclick="openEmojis()">🫥</button>
+    <button>+</button><button>🫥</button>
     <input id="msgInput" placeholder="اكتب هنا...">
-    <button onclick="recordVoice()">🎤</button>
-    <button onclick="sendMsg()">➤</button>
+    <button>🎤</button><button onclick="sendMsg()">➤</button>
   </div>
 
-  <!-- 3. الشريط السفلي -->
   <div class="bottombar">
-    <button onclick="toggleSound()">🔊</button>
-    <button onclick="playRadio()">▶️</button>
+    <button>🔊</button><button>▶️</button>
     <button id="roomNameBtn"></button>
-    <button onclick="openSettings()">⚙️</button>
-    <button onclick="showRooms()">🏠</button>
-    <button onclick="openProfile()">👤</button>
+    <button>⚙️</button><button onclick="showRooms()">🏠</button><button>👤</button>
+  </div>
+</div>
+
+<!-- نافذة المتجر -->
+<div class="popup" id="storePopup">
+  <div class="popup-box">
+    <span onclick="closePopup('store')" style="float:left;cursor:pointer;font-size:24px">&times;</span>
+    <h3>🛒 المتجر</h3>
+    <div id="storeItems"></div>
+    <hr>
+    <h4>رصيدك الحالي: <span id="myCredits">0</span> 💵</h4>
   </div>
 </div>
 
@@ -153,57 +112,47 @@ function closePopup(t){document.getElementById(t+'Popup').style.display='none'}
 function toggleGender(t){document.getElementById(t+'GenderOptions').style.display = document.getElementById(t+'GenderOptions').style.display==='block'?'none':'block'}
 function setGender(t,g){selectedGender=g; document.getElementById('guestGenderBtn').innerText=g==='male'?'ذكر':g==='female'?'انثى':'آخر'; toggleGender(t)}
 function setRegGender(g){regGender=g; document.getElementById('regGenderBtn').innerText=g==='male'?'ذكر':g==='female'?'انثى':'آخر'; toggleGender('reg')}
-function getTime(){const d=new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')} ${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`}
 
-function guestLogin(){currentUser={name:guestName.value, gender:selectedGender, type:'guest'}; showRooms(); closePopup('guest')}
+function guestLogin(){currentUser={name:guestName.value, gender:selectedGender}; socket.emit('join',{...currentUser, room:'عام'}); showRooms(); closePopup('guest')}
 function memberLogin(){socket.emit('login',{name:loginName.value, password:loginPass.value})}
-function register(){if(regPass.value!==regPass2.value) return alert('كلمة السر غير متطابقة'); socket.emit('register',{name:regName.value, password:regPass.value, gender:regGender, email:regEmail.value, age:regAge.value})}
+function register(){if(regPass.value!==regPass2.value) return alert('كلمة السر غير متطابقة'); socket.emit('register',{name:regName.value, password:regPass.value, gender:regGender})}
 
-socket.on('login_ok', m=>{currentUser={name:m.name, gender:m.gender, type:'member', rank:m.rank}; if(m.rank==='admin') reportBtn.classList.remove('hide'); showRooms(); closePopup('login')})
-socket.on('register_ok', ()=>{alert('تم'); showRooms(); closePopup('register')})
+socket.on('login_ok', m=>{currentUser=m; showRooms(); closePopup('login')})
+socket.on('register_ok', ()=>{alert('تم انشاء الحساب'); closePopup('register')})
 
 function showRooms(){mainMenu.style.display='none'; roomsList.classList.remove('hide')}
 function joinRoom(r){currentRoom=r; roomsList.classList.add('hide'); chatArea.style.display='flex'; roomNameBtn.innerText=r; socket.emit('join',{...currentUser, room:r})}
-
-function sendMsg(){if(!msgInput.value.trim()) return; socket.emit('message',{content:msgInput.value, room:currentRoom}); msgInput.value=''}
-function recordVoice(){alert('تسجيل صوتي قريباً')}
-function openStore(){alert('المتجر')}
-function openPrivate(){alert('الخاص')}
-function openLikes(){alert('الاعجابات')}
-function openReports(){alert('صندوق الابلاغ للادارة')}
-function openProfile(){alert('ملفي الشخصي')}
-function openSettings(){alert('الاعدادات')}
-function toggleSound(){}
-function playRadio(){}
-function showRooms(){chatArea.style.display='none'; roomsList.classList.remove('hide')}
+function sendMsg(){if(!msgInput.value.trim()) return; socket.emit('message',{content:msgInput.value}); msgInput.value=''}
+function openStore(){document.getElementById('storePopup').style.display='flex'; loadStore()}
+function loadStore(){
+  storeItems.innerHTML = `
+    <div style="border:1px solid #ddd;padding:10px;margin:10px 0;border-radius:8px">
+      <b>💎 رتبة مميز</b><br><small>رفع صور + يوتيوب + تغيير لون الاسم</small><br><b>السعر: 5000 💵</b><br>
+      <button class="btn-main" onclick="buyRank('vip')">شراء</button>
+    </div>
+    <div style="border:1px solid #ddd;padding:10px;margin:10px 0;border-radius:8px">
+      <b>🛡️ رتبة مشرف</b><br><small>كتم + طرد + حذف رسائل</small><br><b>السعر: 15000 💵</b><br>
+      <button class="btn-main" onclick="buyRank('mod')">شراء</button>
+    </div>
+  `;
+}
+function buyRank(rank){socket.emit('buy_rank', rank)}
 function toggleSidebar(id){document.getElementById(id+'Sidebar').classList.toggle('open')}
-function openAddons(){alert('رسم + الوان + يوتيوب')}
-function openEmojis(){alert('سمايلات')}
+function showRooms(){chatArea.style.display='none'; roomsList.classList.remove('hide')}
 
-// استقبال الرسائل
 socket.on('message', d=>{
   const color = d.user.gender==='male'?'#2196F3':d.user.gender==='female'?'#E91E63':'#9E9E9E';
-  const boxed = d.user.rank==='vip' ? 'msg-boxed' : '';
-  const reportBtn = `<span class="msg-options" onclick="report('${d.id}')">•••</span>`;
-  messages.innerHTML += `
-  <div class="msg">
-    <div class="avatar" style="background:${color}">${d.user.name.charAt(0)}</div>
-    <div class="msg-content ${boxed}">
-      ${reportBtn}
-      <div class="msg-name">${d.user.name}</div>
-      <div class="msg-text">${d.content}</div>
-      <div class="msg-time">${d.time}</div>
-    </div>
-  </div>`;
+  messages.innerHTML += `<div class="msg"><div class="avatar" style="background:${color}">${d.user.name.charAt(0)}</div><div class="msg-content"><div class="msg-name">${d.user.name}</div><div>${d.content}</div><div class="msg-time">${d.time}</div></div></div>`;
   messages.scrollTop = 99999;
 });
 socket.on('system', txt=>{messages.innerHTML += `<div class="system-msg">[ ${txt} ]</div>`});
+socket.on('credits_update', credits=>{myCredits.innerText = credits});
+socket.on('buy_success', msg=>{alert(msg); closePopup('store')});
+socket.on('store_error', msg=>alert(msg));
 socket.on('users list', list=>{
-  usersList.innerHTML = '';
-  list.forEach(u=>{usersList.innerHTML += `<div class="user-item" onclick="openUserProfile('${u.name}')"><div class="avatar" style="background:${u.gender==='male'?'#2196F3':'#E91E63'};width:30px;height:30px">${u.name.charAt(0)}</div>${u.name}</div>`})
+  usersList.innerHTML='';
+  list.forEach(u=>{usersList.innerHTML += `<div style="padding:8px">${u.name}</div>`})
 });
-function report(msgId){socket.emit('report',{msgId, reason:'اساءة', room:currentRoom})}
-function openUserProfile(name){alert('ملف '+name)}
 </script>
 </body>
 </html>
