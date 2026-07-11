@@ -10,11 +10,19 @@ const Filter = require('bad-words');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, { 
+  cors: { origin: "*" },
+  maxHttpBufferSize: 10e6
+});
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public'))); // مهم جدا
+app.use(express.static(path.join(__dirname, 'public')));
+
+// مهم عشان socket.io يشتغل على Render
+app.get('/socket.io/socket.io.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'node_modules/socket.io/client-dist/socket.io.js'));
+});
 
 const DB_FILE = './data/chat.db';
 const filter = new Filter({ placeHolder: '*' });
@@ -36,11 +44,14 @@ async function initDB() {
 initDB();
 
 io.on('connection', async (socket) => {
+  console.log('مستخدم جديد اتصل:', socket.id);
+
   socket.on('join', async (u) => {
-    const name = filter.clean(u.name);
+    const name = u.name ? filter.clean(u.name) : 'زائر';
     const isAdmin = name.toLowerCase() === 'admin';
     users[socket.id] = {...u, name, id: socket.id, room: 'عام', isAdmin};
     socket.join('عام');
+    
     io.to('عام').emit('user joined', users[socket.id]);
     socket.emit('you are', {id: socket.id, isAdmin});
     socket.emit('users list', Object.values(users).filter(u => u.room === 'عام'));
@@ -50,6 +61,10 @@ io.on('connection', async (socket) => {
   socket.on('message', async (d) => {
     const user = users[socket.id];
     if (!user) return;
+    
+    // منع الرسائل الفاضية
+    if(!d.content || d.content.trim() === '') return;
+
     try { await messageLimiter.consume(socket.id); } catch { return socket.emit('system', 'هدي شوي'); }
 
     let content = filter.clean(d.content);
@@ -81,6 +96,7 @@ io.on('connection', async (socket) => {
     if(u){ 
       io.to(u.room).emit('user left', u.name); 
       delete users[socket.id]; 
+      console.log('مستخدم خرج:', u.name);
     } 
   });
 });
