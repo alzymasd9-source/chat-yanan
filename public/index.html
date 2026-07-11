@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>شات اليمن 5.5</title>
+<title>شات اليمن 5.7</title>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -22,14 +22,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
 .users-list{position:fixed;right:0;top:0;bottom:0;width:280px;background:var(--card);transform:translateX(100%);transition:0.3s;z-index:99}
 .users-list.show{transform:translateX(0)}
 .user-item{padding:10px;border-bottom:1px solid #333;cursor:pointer}
-#status{position:fixed;bottom:80px;left:10px;background:#4CAF50;color:#fff;padding:5px 10px;border-radius:5px;font-size:12px}
+#status{position:fixed;bottom:80px;left:10px;background:#4CAF50;color:#fff;padding:5px 10px;border-radius:5px;font-size:12px;z-index:999}
 </style>
 </head>
 <body>
 <div id="status">متصل ✅</div>
 
 <div id="loginPage" class="page active">
-  <h2 style="text-align:center;color:var(--primary);margin:20px 0">شات اليمن 5.5 🇾🇪</h2>
+  <h2 style="text-align:center;color:var(--primary);margin:20px 0">شات اليمن 5.7 🇾🇪</h2>
   <div class="card"><input class="input" id="visitorName" placeholder="اكتب اسمك" style="margin-bottom:10px"><button class="btn" style="width:100%" onclick="loginVisitor()">دخول زائر</button></div>
 </div>
 
@@ -55,6 +55,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
 const API = window.location.origin;
 const socket = io(API, {transports: ['websocket', 'polling']});
 let currentUser={}, currentRoom='العامة';
+const IMGBB_KEY = "YOUR_IMGBB_KEY"; // حط المفتاح حقك هنا بعد شوي
 
 socket.on('connect',()=>document.getElementById('status').innerText="متصل ✅");
 
@@ -73,15 +74,27 @@ function enterRoom(room){currentRoom=room;socket.emit('joinRoom',room);showPage(
 function toggleRadio(){let p=document.getElementById('radioPlayer');let b=document.getElementById('playBtn');if(p.paused){p.play();b.innerText='⏸️ ايقاف';}else{p.pause();b.innerText='▶️ تشغيل';}}
 function toggleUsers(){document.getElementById('usersList').classList.toggle('show');}
 
-async function loadUsers(){let res=await fetch(API+'/users');let users=await res.json();document.getElementById('usersBox').innerHTML=users.map(u=>`<div class="user-item" onclick="alert('الخاص جاي بالاصدار الجاي')">${u.name}</div>`).join('');}
+async function loadUsers(){let res=await fetch(API+'/users');let users=await res.json();document.getElementById('usersBox').innerHTML=users.map(u=>`<div class="user-item">${u.name}</div>`).join('');}
 
+// رفع الصور الجديد - imgbb
 async function uploadImg(){
 let i=document.createElement('input');i.type='file';i.accept='image/*';
-i.onchange=async e=>{
-let f=new FormData();f.append('file',e.target.files[0]);
-let r=await fetch(API+'/upload',{method:"POST",body:f});
-let d=await r.json();
-sendMsg(`<img src="${API+d.url}" style="max-width:200px;border-radius:10px">`)
+i.onchange= async e=>{
+  document.getElementById('status').innerText="جاري رفع الصورة...";
+  let file = e.target.files[0];
+  let formData = new FormData();
+  formData.append("image", file);
+  
+  let r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`,{method:"POST",body:formData});
+  let d = await r.json();
+  
+  if(d.success){
+    sendMsg(`<img src="${d.data.url}" style="max-width:200px;border-radius:10px">`)
+    document.getElementById('status').innerText="متصل ✅";
+  }else{
+    alert("فشل الرفع");
+    document.getElementById('status').innerText="متصل ✅";
+  }
 };i.click();
 }
 
