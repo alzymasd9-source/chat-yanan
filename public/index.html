@@ -3,52 +3,202 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>شات اليمن</title>
+<title>شات اليمن المطور</title>
 <style>
-body{margin:0;font-family:tahoma;background:#f0f0f0}
-.header{background:#075e54;color:#fff;padding:10px;text-align:center}
-#roomid{position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;display:flex;align-items:center;justify-content:center}
-#chat{display:none;padding:10px}
-#messages{height:400px;overflow:auto;background:#fff;margin:10px 0;padding:10px}
-.btn{background:#075e54;color:#fff;border:none;padding:10px 20px;border-radius:5px;cursor:pointer}
+:root{--green:#075e54;--blue:#2196F3;--pink:#E91E63;--gray:#9E9E9E}
+*{box-sizing:border-box;font-family:tahoma}
+body{margin:0;background:linear-gradient(135deg,#075e54,#128c7e);height:100vh}
+.main-menu{display:flex;justify-content:center;align-items:center;height:100%;gap:20px;flex-wrap:wrap}
+.menu-btn{background:#fff;color:var(--green);border:none;padding:20px 40px;font-size:18px;font-weight:bold;border-radius:15px;cursor:pointer;box-shadow:0 5px 15px rgba(0,0,0,0.3)}
+.menu-btn:hover{transform:scale(1.05)}
+.popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:999}
+.popup-box{background:#fff;padding:30px;border-radius:15px;width:90%;max-width:400px}
+.popup-box h3{text-align:center;color:var(--green);margin-bottom:20px}
+.popup-box input, .popup-box select{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:8px;font-size:16px}
+.gender-btns{display:flex;gap:10px;margin:10px 0}
+.gender-btn{flex:1;padding:10px;border:2px solid #ddd;border-radius:8px;cursor:pointer;text-align:center;font-weight:bold}
+.gender-btn.active{border-color:var(--green)}
+.gender-male.active{background:var(--blue);color:#fff}
+.gender-female.active{background:var(--pink);color:#fff}
+.gender-other.active{background:var(--gray);color:#fff}
+.btn-main{background:var(--green);color:#fff;border:none;padding:12px;width:100%;border-radius:8px;font-size:16px;cursor:pointer;margin-top:10px}
+.close{float:left;cursor:pointer;font-size:24px}
+.rooms-list{display:none;padding:20px}
+.room{background:#fff;margin:10px 0;padding:15px;border-radius:10px;display:flex;justify-content:space-between;align-items:center}
+.room-join{background:var(--green);color:#fff;border:none;padding:8px 15px;border-radius:8px;cursor:pointer}
+#messages{height:400px;overflow:auto;background:#e5ddd5;padding:10px}
+.msg{padding:8px;background:#fff;border-radius:8px;margin:5px 0}
+.hide{display:none}
 </style>
 </head>
 <body>
-<div class="header">شات اليمن المطور</div>
 
-<div id="roomid">
-  <div>
-    <h3>أهلاً بك</h3>
-    <input id="name" placeholder="اسمك">
-    <button class="btn" id="join">دخول</button>
+<div class="main-menu">
+  <button class="menu-btn" onclick="openPopup('guest')">1- دخول زوار</button>
+  <button class="menu-btn" onclick="openPopup('login')">2- دخول الأعضاء</button>
+  <button class="menu-btn" onclick="openPopup('register')">3- تسجيل</button>
+</div>
+
+<!-- 1. نافذة الزوار -->
+<div class="popup" id="guestPopup">
+  <div class="popup-box">
+    <span class="close" onclick="closePopup('guest')">&times;</span>
+    <h3>دخول زائر</h3>
+    <input id="guestName" placeholder="اسم المستخدم">
+    <label>الجنس:</label>
+    <div class="gender-btns">
+      <div class="gender-btn gender-male" onclick="selectGender(this,'male')">ذكر</div>
+      <div class="gender-btn gender-female" onclick="selectGender(this,'female')">انثى</div>
+      <div class="gender-btn gender-other" onclick="selectGender(this,'other')">آخر</div>
+    </div>
+    <button class="btn-main" onclick="guestLogin()">دخول</button>
   </div>
 </div>
 
-<div id="chat">
+<!-- 2. نافذة الاعضاء -->
+<div class="popup" id="loginPopup">
+  <div class="popup-box">
+    <span class="close" onclick="closePopup('login')">&times;</span>
+    <h3>دخول الأعضاء</h3>
+    <input id="loginName" placeholder="اكتب اسمك هنا">
+    <input id="loginPass" type="password" placeholder="كلمة السر - ارقام واحرف انجليزي">
+    <button class="btn-main" onclick="memberLogin()">دخول</button>
+  </div>
+</div>
+
+<!-- 3. نافذة التسجيل -->
+<div class="popup" id="registerPopup">
+  <div class="popup-box">
+    <span class="close" onclick="closePopup('register')">&times;</span>
+    <h3>انشاء حساب</h3>
+    <input id="regName" placeholder="اسم العضو - اكتب اسمك هنا">
+    <label>الجنس:</label>
+    <div class="gender-btns">
+      <div class="gender-btn gender-male" onclick="selectRegGender(this,'male')">ذكر</div>
+      <div class="gender-btn gender-female" onclick="selectRegGender(this,'female')">انثى</div>
+      <div class="gender-btn gender-other" onclick="selectRegGender(this,'other')">آخر</div>
+    </div>
+    <input id="regPass" type="password" placeholder="كلمة السر">
+    <input id="regPass2" type="password" placeholder="تأكيد كلمة السر">
+    <input id="regEmail" placeholder="البريد الالكتروني - اختياري">
+    <input id="regAge" type="number" placeholder="العمر">
+    <button class="btn-main" onclick="register()">انشاء حساب</button>
+  </div>
+</div>
+
+<!-- قائمة الغرف -->
+<div class="rooms-list" id="roomsList">
+  <h2 style="text-align:center;color:#fff">اختر الغرفة</h2>
+  <div class="room">
+    <span>🌎 غرفة العامة 🌎</span>
+    <button class="room-join" onclick="joinRoom('عام')">اضغط هنا للدخول</button>
+  </div>
+  <div class="room">
+    <span>🌎 غرفة اليمن 🌎</span>
+    <button class="room-join" onclick="joinRoom('اليمن')">اضغط هنا للدخول</button>
+  </div>
+  <div class="room">
+    <span>🌎 غرفة الجزائر 🌎</span>
+    <button class="room-join" onclick="joinRoom('الجزائر')">اضغط هنا للدخول</button>
+  </div>
+  <div class="room">
+    <span>🌎 غرفة مصر 🌎</span>
+    <button class="room-join" onclick="joinRoom('مصر')">اضغط هنا للدخول</button>
+  </div>
+</div>
+
+<!-- منطقة الشات -->
+<div id="chatArea" class="hide">
+  <div class="header" style="background:#075e54;color:#fff;padding:10px;text-align:center">الغرفة: <span id="roomName"></span></div>
   <div id="messages"></div>
-  <input id="msg" placeholder="اكتب">
-  <button class="btn" id="send">ارسال</button>
+  <div style="padding:10px;display:flex;gap:10px">
+    <input id="msgInput" placeholder="اكتب رسالتك" style="flex:1;padding:10px;border-radius:20px;border:1px solid #ddd">
+    <button class="btn-main" style="width:100px" onclick="sendMsg()">ارسال</button>
+  </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
-document.getElementById('join').onclick = () => {
-  const name = document.getElementById('name').value;
-  if(!name) return alert('دخل اسمك');
-  socket.emit('join', {name});
-  document.getElementById('roomid').style.display = 'none';
-  document.getElementById('chat').style.display = 'block';
+let currentUser = {};
+let selectedGender = 'male';
+let regGender = 'male';
+let currentRoom = '';
+
+// فتح واغلاق النوافذ
+function openPopup(type){document.getElementById(type+'Popup').style.display='flex'}
+function closePopup(type){document.getElementById(type+'Popup').style.display='none'}
+
+// اختيار الجنس للزوار
+function selectGender(el, g){
+  document.querySelectorAll('#guestPopup .gender-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); selectedGender = g;
 }
-document.getElementById('send').onclick = () => {
-  const txt = document.getElementById('msg').value;
+// اختيار الجنس للتسجيل
+function selectRegGender(el, g){
+  document.querySelectorAll('#registerPopup .gender-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); regGender = g;
+}
+
+// دخول زائر
+function guestLogin(){
+  const name = document.getElementById('guestName').value.trim();
+  if(!name) return alert('اكتب اسمك');
+  currentUser = {name, gender:selectedGender, type:'guest'};
+  showRooms();
+  closePopup('guest');
+}
+
+// دخول عضو
+function memberLogin(){
+  const name = document.getElementById('loginName').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  if(!name || !pass) return alert('اكمل البيانات');
+  currentUser = {name, type:'member'};
+  showRooms();
+  closePopup('login');
+}
+
+// تسجيل
+function register(){
+  const name = document.getElementById('regName').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const pass2 = document.getElementById('regPass2').value;
+  if(pass !== pass2) return alert('كلمة السر غير متطابقة');
+  if(!name || !pass) return alert('اكمل البيانات المطلوبة');
+  currentUser = {name, gender:regGender, type:'member'};
+  showRooms();
+  closePopup('register');
+}
+
+function showRooms(){
+  document.querySelector('.main-menu').style.display='none';
+  document.getElementById('roomsList').style.display='block';
+}
+
+// الدخول للغرفة
+function joinRoom(room){
+  currentRoom = room;
+  document.getElementById('roomsList').style.display='none';
+  document.getElementById('chatArea').classList.remove('hide');
+  document.getElementById('roomName').innerText = room;
+  socket.emit('join', {...currentUser, room});
+}
+
+// ارسال رسالة
+function sendMsg(){
+  const txt = document.getElementById('msgInput').value.trim();
   if(!txt) return;
-  socket.emit('message', {type:'text', content:txt});
-  document.getElementById('msg').value = '';
+  socket.emit('message', {type:'text', content:txt, room:currentRoom});
+  document.getElementById('msgInput').value='';
 }
+
 socket.on('message', d => {
-  document.getElementById('messages').innerHTML += `<b>${d.user.name}:</b> ${d.content}<br>`;
-})
+  document.getElementById('messages').innerHTML += `<div class="msg"><b>${d.user.name}:</b> ${d.content}</div>`;
+});
+socket.on('user joined', u => {
+  document.getElementById('messages').innerHTML += `<div style="text-align:center;color:#666">انضم للغرفة ${u.name} هلا وسهلا</div>`;
+});
 </script>
 </body>
 </html>
