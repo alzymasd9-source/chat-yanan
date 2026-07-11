@@ -1,12 +1,14 @@
 <!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>شات اليمن المطور | الدردشة اليمنية</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
 :root{--green:#075e54;--light:#dcf8c6}
-body{margin:0;font-family:tahoma;background:#f0f0f0}
-.header{background:var(--green);color:#fff;padding:10px 15px;display:flex;justify-content:space-between;align-items:center}
+*{box-sizing:border-box}
+body{margin:0;font-family:tahoma;background:#f0f0f0;overflow:hidden}
+.header{background:var(--green);color:#fff;padding:10px 15px;display:flex;justify-content:space-between;align-items:center;position:fixed;width:100%;z-index:10}
 .header a{color:#fff;text-decoration:none;font-size:18px;font-weight:bold}
-#wrap{display:flex;height:calc(100vh - 55px)}
+#wrap{display:flex;height:100vh;padding-top:55px}
 #sidebar{width:280px;background:#fff;border-left:1px solid #ddd;display:flex;flex-direction:column}
 #users_list{flex:1;overflow:auto;padding:10px}
 .user-item{display:flex;align-items:center;padding:8px;border-radius:8px;cursor:pointer;position:relative}
@@ -20,13 +22,14 @@ body{margin:0;font-family:tahoma;background:#f0f0f0}
 .msg .time{font-size:11px;color:#999;text-align:left}
 .msg-actions{position:absolute;left:5px;top:5px;display:none;gap:5px;font-size:14px;cursor:pointer}
 .msg:hover .msg-actions{display:flex}
-.mention-name{cursor:pointer}
-.mention-name:hover{opacity:0.7;text-decoration:underline}
+.mention-name{cursor:pointer;color:var(--green);font-weight:bold}
 #chat-input{padding:10px;background:#f0f0f0;display:flex;gap:10px;position:relative}
 #msg_input{flex:1;padding:10px;border:1px solid #ddd;border-radius:20px}
 .btn{background:var(--green);color:#fff;border:none;padding:10px 15px;border-radius:20px;cursor:pointer}
 #reply_box{position:absolute;bottom:55px;left:10px;right:60px;background:#e9edef;padding:8px;border-right:3px solid var(--green);border-radius:5px;font-size:13px;}
 .hide{display:none}
+#roomid{position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:999;display:flex;align-items:center;justify-content:center}
+@media(max-width:768px){#sidebar{position:absolute;z-index:5;height:100%}}
 </style></head><body>
 <div class="header"><a href="/">شات اليمن المطور</a><b>أكبر تجمع يمني</b></div>
 <div id="wrap">
@@ -40,12 +43,12 @@ body{margin:0;font-family:tahoma;background:#f0f0f0}
     <div id="chat-input">
       <div id="reply_box" class="hide"><span id="reply_close" style="float:left;cursor:pointer">×</span><b id="reply_name"></b><div id="reply_text"></div></div>
       <input id="msg_input" placeholder="اكتب رسالتك...">
-      <button class="btn" onclick="send('text',$('msg_input').value)">ارسال</button>
+      <button class="btn" id="send_btn">ارسال</button>
     </div>
   </div>
 </div>
 
-<div id="roomid" class="room" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:999;display:flex;align-items:center;justify-content:center">
+<div id="roomid">
   <div style="text-align:center">
     <h3>أهلاً بك في شات اليمن المطور</h3>
     <input id="name_input" placeholder="اسمك">
@@ -57,10 +60,65 @@ body{margin:0;font-family:tahoma;background:#f0f0f0}
 <script>
 const $=id=>document.getElementById(id);
 const socket=io();
-let myId, currentUser, replyToMsg=null, lastMentioned=null;
-$('guest_btn').onclick=()=>{const name=$('name_input').value; if(!name)return; currentUser={name,gender:'male'}; socket.emit('join',currentUser); $('roomid').classList.add('hide');}
+let myId, currentUser, replyToMsg=null, lastMentioned=null, pmWith=null;
+
+$('guest_btn').onclick=()=>{
+  const name=$('name_input').value; 
+  if(!name)return alert('دخل اسمك'); 
+  currentUser={name,gender:'male'}; 
+  socket.emit('join',currentUser); 
+  $('roomid').classList.add('hide');
+}
+
 socket.on('you are',d=>{myId=d.id;});
-function mentionUser(name){lastMentioned=name; $('msg_input').value=`${name} `; $('msg_input').focus();}
-function send(type,content){socket.emit('message',{type,content,mention:lastMentioned,replyTo:replyToMsg}); lastMentioned=null; replyToMsg=null; $('reply_box').classList.add('hide'); $('msg_input').value='';}
+
+function mentionUser(name){
+  lastMentioned=name; 
+  $('msg_input').value=`${name} `; 
+  $('msg_input').focus();
+}
+
+function send(type,content){
+  if(!content.trim())return;
+  socket.emit('message',{type,content,mention:lastMentioned,replyTo:replyToMsg}); 
+  lastMentioned=null; 
+  replyToMsg=null; 
+  $('reply_box').classList.add('hide'); 
+  $('msg_input').value='';
+}
+
+$('send_btn').onclick=()=>send('text',$('msg_input').value);
+$('msg_input').onkeypress=e=>{if(e.key==='Enter')send('text',e.target.value)}
+
+socket.on('message',d=>{
+  const div=document.createElement('div');
+  div.className='msg '+(d.user.id===myId?'me':'');
+  div.innerHTML=`<b>${d.user.name}</b><br>${d.content}<div class="time">${d.time}</div>`;
+  $('messages').appendChild(div);
+  $('messages').scrollTop=$('messages').scrollHeight;
+})
+
+socket.on('users list',list=>{
+  $('users_list').innerHTML='';
+  list.forEach(u=>{
+    const div=document.createElement('div');
+    div.className='user-item';
+    div.innerHTML=`<div class="user-avatar">${u.name.charAt(0)}</div>
+      <span class="mention-name" onclick="mentionUser('${u.name}')">${u.name}</span> ${u.isAdmin?'<span class="admin-tag">مشرف</span>':''}`;
+    $('users_list').appendChild(div);
+  });
+  $('user_count').innerText=list.length;
+})
+
+socket.on('user joined',u=>{
+  addMsg('sys',`${u.name} دخل الشات`);
+  socket.emit('get users');
+})
+
+function addMsg(type,msg){
+  const div=document.createElement('div');
+  div.style.textAlign='center'; div.style.color='#999'; div.style.fontSize='12px';
+  div.innerText=msg; $('messages').appendChild(div);
+}
 </script>
 </body></html>
