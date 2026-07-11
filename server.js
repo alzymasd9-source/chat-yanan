@@ -1,127 +1,110 @@
+
+
+
 const express = require('express');
 const http = require('http');
-const { Server } = require('socket.io');
+const { Server } = require("socket.io");
+const multer = require('multer');
+const path = require('path');
 const cors = require('cors');
-const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: "*" }, trustProxy: true });
 
 app.use(cors());
-app.use(express.json({limit: '50mb'}));
 app.use(express.static('public'));
+app.use('/uploads', express.static('uploads'));
+if (!fs.existsSync('./uploads')) fs.mkdirSync('./uploads');
+const DATA_DIR = './data';
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
-cloudinary.config({
-  cloud_name: 'حط_الكلاود_نيم_هنا',
-  api_key: 'حط_الايبي_كي_هنا',
-  api_secret: 'حط_السيكرت_هنا'
-});
+const BANS_FILE = path.join(DATA_DIR, 'bans.json');
+const MESSAGES_FILE = path.join(DATA_DIR, 'messages.json');
+const MUTED_FILE = path.join(DATA_DIR, 'muted.json');
+const MAX_MESSAGES = 100;
 
-let DB = {users: [], msgs: { 'العامة': [], 'اليمن': [], 'الجزائر': [], 'مصر': [] }};
-if(fs.existsSync('db.json')) DB = JSON.parse(fs.readFileSync('db.json'));
-function saveDB(){ fs.writeFileSync('db.json', JSON.stringify(DB)); }
+const loadJSON = (file, d = {}) => fs.existsSync(file)? JSON.parse(fs.readFileSync(file, 'utf8')) : d;
+const saveJSON = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
 
-const io = new Server(server, { cors: { origin: "*" } });
+let bannedIPs = loadJSON(BANS_FILE);
+let chatHistory = loadJSON(MESSAGES_FILE, { 'عام': [], 'تعارف': [], 'اليمن': [], 'فلة': [] });
+let globalMuted = loadJSON(MUTED_FILE, []);
 
-const shopItems = {
-  'color_gold': {name: 'لون ذهبي', price: 500, color: '#FFD700'},
-  'color_red': {name: 'لون احمر', price: 500, color: '#FF0000'},
-  'color_blue': {name: 'لون ازرق', price: 500, color: '#2196F3'},
-  'vip': {name: 'تاج VIP', price: 2000, rank: 'vip'}
+let users = {};
+let rooms = { 'عام': [], 'تعارف': [], 'اليمن': [], 'فلة': [] };
+const ADMINS = ['admin', 'مدير'];
+
+const getIP = socket => socket.handshake.headers['x-forwarded-for']?.split(',')[0].trim() || socket.handshake.address;
+const saveBans = () => saveJSON(BANS_FILE, bannedIPs);
+const saveMuted = () => saveJSON(MUTED_FILE, globalMuted);
+const saveMessage = (room, msg) => {
+  chatHistory[room] = chatHistory[room] || [];
+  chatHistory[room].push(msg);
+  if (chatHistory[room].length > MAX_MESSAGES) chatHistory[room].shift();
+  saveJSON(MESSAGES_FILE, chatHistory);
 };
-const gifts = {
-  'rose': {name: '🌹 وردة', price: 100},
-  'car': {name: '🚗 سيارة', price: 5000},
-  'crown': {name: '👑 تاج', price: 10000}
-};
 
-// الحل رقم 3: اسمك انت الادمن دايما
-app.post('/register', (req, res) => {
-  let {name, pass} = req.body;
-  if(DB.users.find(u => u.name == name)) return res.status(400).json({error:"الاسم موجود"});
-  
-  // غير اسمك_هنا لاسمك اللي بتسجل بيه
-  let rank = name === 'اسمك_هنا'? 'admin' : 'member'; 
-  
-  let user = {name, pass, rank, coins:1000, color: '#FFFFFF'};
-  DB.users.push(user);
-  saveDB();
-  res.json(user);
-});
-
-app.post('/login', (req, res) => {
-  let user = DB.users.find(u => u.name == req.body.name && u.pass == req.body.pass);
-  if (!user) return res.status(404).json({ error: "737946244" });
-  
-  // حتى لو الحساب قديم نخليه ادمن لو الاسم مطابق
-  if(user.name === 'admin') user.rank = 'admin';
-  
-  res.json(user);
-});
-
-app.get('/users', (req, res) => { res.json(DB.users); });
-app.get('/shop', (req, res) => { res.json(shopItems); });
-app.get('/gifts', (req, res) => { res.json(gifts); });
-
-app.post('/buy', (req, res) => {
-  let {name, item} = req.body;
-  let user = DB.users.find(u => u.name == name);
-  let product = shopItems[item];
-  if(!user ||!product) return res.status(400).json({error:"خطأ"});
-  if(user.coins < product.price) return res.status(400).json({error:"الكوينز غير كافية"});
-  user.coins -= product.price;
-  if(product.color) user.color = product.color;
-  if(product.rank) user.rank = product.rank;
-  saveDB();
-  res.json(user);
-});
-
-app.post('/sendGift', (req, res) => {
-  let {from, to, gift} = req.body;
-  let sender = DB.users.find(u => u.name == from);
-  let receiver = DB.users.find(u => u.name == to);
-  let giftData = gifts[gift]; // صلحت الخطأ
-  if(!sender ||!receiver ||!giftData) return res.status(400).json({error:"خطأ"});
-  if(sender.coins < giftData.price) return res.status(400).json({error:"الكوينز غير كافية"});
-  sender.coins -= giftData.price;
-  receiver.coins += Math.floor(giftData.price / 2);
-  saveDB();
-  io.emit('gift', {from, to, gift: giftData.name});
-  res.json({sender, receiver});
-});
-
-app.post('/admin', (req, res) => {
-  let {admin, target, action} = req.body;
-  let adminUser = DB.users.find(u => u.name == admin);
-  if(adminUser.rank!== 'admin') return res.status(403).json({error:"ممنوع"});
-  let targetUser = DB.users.find(u => u.name == target);
-  if(action === 'kick') targetUser.rank = 'muted';
-  if(action === 'unmute') targetUser.rank = 'member';
-  if(action === 'addCoins') targetUser.coins += 1000;
-  saveDB();
-  res.json({ok:true});
-});
-
-app.post('/upload', async (req, res) => {
-  try{
-    const result = await cloudinary.uploader.upload(req.body.data, {folder: "yemen-chat"});
-    res.json({ url: result.secure_url });
-  }catch(e){ res.status(500).json({error: e.message}) }
-});
+const imgStorage = multer.diskStorage({ destination: './uploads/', filename: (req, f, cb) => cb(null, 'img_' + Date.now() + path.extname(f.originalname)) });
+const audioStorage = multer.diskStorage({ destination: './uploads/', filename: (req, f, cb) => cb(null, 'audio_' + Date.now() + '.webm') });
+app.post('/upload', uploadImg = multer({ storage: imgStorage }).single('image'), (req, res) => res.json({ url: '/uploads/' + req.file.filename }));
+app.post('/upload-audio', uploadAudio = multer({ storage: audioStorage }).single('audio'), (req, res) => res.json({ url: '/uploads/' + req.file.filename }));
 
 io.on('connection', (socket) => {
-  socket.on('join', (user) => { socket.user = user; if (!DB.users.find(u => u.name == user.name)) DB.users.push(user); });
-  socket.on('joinRoom', (room) => { socket.join(room); });
-  socket.on('sendMsg', (msg) => {
-    let user = DB.users.find(u => u.name == msg.sender);
-    if(user?.rank === 'muted') return;
-    if (!DB.msgs[msg.room]) DB.msgs[msg.room] = [];
-    DB.msgs[msg.room].push(msg);
-    if(DB.msgs[msg.room].length > 100) DB.msgs[msg.room].shift();
-    io.to(msg.room).emit('newMsg', msg);
+  const ip = getIP(socket);
+  if (bannedIPs[ip] && (bannedIPs[ip].expire === null || bannedIPs[ip].expire > Date.now())) {
+    socket.emit('banned', `انت محظور: ${bannedIPs[ip].reason}`);
+    return socket.disconnect(true);
+  } else if (bannedIPs[ip]) { delete bannedIPs[ip]; saveBans(); }
+
+  socket.on('join', (u) => {
+    const isAdmin = ADMINS.includes(u.name.toLowerCase());
+    users[socket.id] = {...u, id: socket.id, room: 'عام', isAdmin, ip};
+    socket.join('عام'); rooms['عام'].push(socket.id);
+    io.to('عام').emit('user joined', users[socket.id]);
+    socket.emit('users list', rooms['عام'].map(id => users[id]));
+    socket.emit('you are', {id: socket.id, isAdmin});
+    socket.emit('chat history', chatHistory['عام'] || []);
+    if (globalMuted.includes(socket.id)) socket.emit('you muted', true);
   });
+
+  socket.on('joinRoom', (r) => {
+    const user = users[socket.id]; if (!user) return;
+    socket.leave(user.room); rooms[user.room] = rooms[user.room].filter(id => id!== socket.id);
+    io.to(user.room).emit('user left', user.name);
+    user.room = r; socket.join(r); rooms[r].push(socket.id);
+    io.to(r).emit('user joined', user);
+    socket.emit('users list', rooms[r].map(id => users[id]));
+    socket.emit('chat history', chatHistory[r] || []);
+  });
+
+  socket.on('message', (d) => {
+    const user = users[socket.id]; if (!user || globalMuted.includes(socket.id)) return;
+    const msg = {id: Date.now(), type: d.type, content: d.content, user: {name: user.name, gender: user.gender, id: user.id}, time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'})};
+    if (d.pm) {
+      const t = io.sockets.sockets.get(d.pm);
+      if (t) { t.emit('pm message', msg); socket.emit('pm message', msg); }
+    } else { saveMessage(user.room, msg); io.to(user.room).emit('message', msg); }
+  });
+
+  socket.on('mute user', (id) => { if(users[socket.id]?.isAdmin &&!globalMuted.includes(id)){ globalMuted.push(id); saveMuted(); io.to(id).emit('you muted', true); io.to(users[socket.id].room).emit('system', `${users[id].name} تم كتمه`); } });
+  socket.on('unmute user', (id) => { if(users[socket.id]?.isAdmin){ globalMuted = globalMuted.filter(x => x!== id); saveMuted(); io.to(id).emit('you muted', false); io.to(users[socket.id].room).emit('system', `${users[id].name} فك كتم`); } });
+  socket.on('kick user', (id) => { if(users[socket.id]?.isAdmin){ io.to(id).emit('kicked', 'تم طردك'); io.sockets.sockets.get(id)?.disconnect(true); } });
+  socket.on('ban user', (d) => {
+    if(!users[socket.id]?.isAdmin) return;
+    const t = users[d.targetId]; if(!t) return;
+    bannedIPs[t.ip] = {reason: d.reason||'مخالفة', expire: d.hours? Date.now()+d.hours*3600000:null, by: users[socket.id].name};
+    saveBans();
+    io.to(d.targetId).emit('banned', `تم حظرك: ${bannedIPs[t.ip].reason}`);
+    io.sockets.sockets.get(d.targetId)?.disconnect(true);
+    io.to(users[socket.id].room).emit('system', `${t.name} تم حظره ${d.hours? d.hours+' ساعة':'دائم'}`);
+  });
+  socket.on('unban ip', (ip) => { if(users[socket.id]?.isAdmin){ delete bannedIPs[ip]; saveBans(); io.to(users[socket.id].room).emit('system', `فك حظر ${ip}`); } });
+  socket.on('get bans', () => { if(users[socket.id]?.isAdmin) socket.emit('bans list', bannedIPs); });
+  socket.on('save settings', (s) => { if(users[socket.id]){ users[socket.id].font=s.font; users[socket.id].color=s.color; } });
+  socket.on('disconnect', () => { const u=users[socket.id]; if(u){ rooms[u.room]=rooms[u.room].filter(x=>x!==socket.id); io.to(u.room).emit('user left', u.name); delete users[socket.id]; } });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`السيرفر شغال`));
+setInterval(()=>{ saveBans(); saveJSON(MESSAGES_FILE, chatHistory); saveMuted(); }, 30000);
+server.listen(3000, ()=>console.log(`http://localhost:3000`));
