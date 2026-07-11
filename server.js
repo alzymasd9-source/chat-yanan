@@ -2,46 +2,47 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
+const cloudinary = require('cloudinary').v2;
 
 const app = express();
 const server = http.createServer(app);
 
 app.use(cors());
-app.use(express.json({limit: '10mb'}));
+app.use(express.json({limit: '50mb'})); // زدنا الحجم عشان الصور
 app.use(express.static('public'));
 
-// اهم سطرين عشان الرفع
-const uploadPath = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath);
-app.use('/uploads', express.static(uploadPath));
+// حط بياناتك حق Cloudinary هنا
+cloudinary.config({ 
+  cloud_name: 'حط_الكلاود_نيم_هنا', 
+  api_key: 'حط_الايبي_كي_هنا', 
+  api_secret: 'حط_السيكرت_هنا' 
+});
 
 let users = [];
 let msgs = { 'العامة': [], 'اليمن': [], 'الجزائر': [], 'مصر': [] };
 
-const storage = multer.diskStorage({
-  destination: uploadPath,
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
-const upload = multer({ storage });
-
 const io = new Server(server, { cors: { origin: "*" } });
 
-app.post('/register', (req, res) => { let user = { ...req.body, id: Date.now() }; users.push(user); res.json(user); });
-app.post('/login', (req, res) => { let user = users.find(u => u.name == req.body.name && u.pass == req.body.pass); if (!user) return res.status(404).json({ error: "خطأ" }); res.json(user); });
 app.get('/msgs/:room', (req, res) => { res.json(msgs[req.params.room] || []); });
-app.post('/upload', upload.single('file'), (req, res) => { res.json({ url: '/uploads/' + req.file.filename }); });
 app.get('/users', (req, res) => { res.json(users); });
-app.post('/logout', (req, res) => { users = users.filter(u => u.name != req.body.name); res.json({ ok: true }); });
+
+// رفع جديد على كلاوديناري
+app.post('/upload', async (req, res) => {
+  try{
+    const fileStr = req.body.data; // بنرسل الصورة كـ base64
+    const result = await cloudinary.uploader.upload(fileStr, {folder: "yemen-chat"});
+    res.json({ url: result.secure_url });
+  }catch(e){
+    res.status(500).json({error: e.message})
+  }
+});
 
 io.on('connection', (socket) => {
   socket.on('join', (user) => { socket.user = user; if (!users.find(u => u.name == user.name)) users.push(user); });
   socket.on('joinRoom', (room) => { socket.join(room); });
-  socket.on('sendMsg', (msg) => { if (!msgs[msg.room]) msgs[msg.room] = []; msgs[msg.room].push(msg); if (msgs[msg.room].length > 100) msgs[msg.room].shift(); io.to(msg.room).emit('newMsg', msg); });
-  socket.on('disconnect', () => { users = users.filter(u => u.name != socket.user?.name); });
+  socket.on('sendMsg', (msg) => { if (!msgs[msg.room]) msgs[msg.room] = []; msgs[msg.room].push(msg); io.to(msg.room).emit('newMsg', msg); });
+  socket.on('disconnect', () => { users = users.filter(u => u.name!= socket.user?.name); });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`السيرفر شغال على ${PORT}`));
+server.listen(PORT, () => console.log(`السيرفر شغال`));
