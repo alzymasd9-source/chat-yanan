@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>شات اليمن 5.7</title>
+<title>شات اليمن 5.8</title>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -29,7 +29,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
 <div id="status">متصل ✅</div>
 
 <div id="loginPage" class="page active">
-  <h2 style="text-align:center;color:var(--primary);margin:20px 0">شات اليمن 5.7 🇾🇪</h2>
+  <h2 style="text-align:center;color:var(--primary);margin:20px 0">شات اليمن 5.8 🇾🇪</h2>
   <div class="card"><input class="input" id="visitorName" placeholder="اكتب اسمك" style="margin-bottom:10px"><button class="btn" style="width:100%" onclick="loginVisitor()">دخول زائر</button></div>
 </div>
 
@@ -55,7 +55,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
 const API = window.location.origin;
 const socket = io(API, {transports: ['websocket', 'polling']});
 let currentUser={}, currentRoom='العامة';
-const IMGBB_KEY = "YOUR_IMGBB_KEY"; // حط المفتاح حقك هنا بعد شوي
 
 socket.on('connect',()=>document.getElementById('status').innerText="متصل ✅");
 
@@ -76,20 +75,20 @@ function toggleUsers(){document.getElementById('usersList').classList.toggle('sh
 
 async function loadUsers(){let res=await fetch(API+'/users');let users=await res.json();document.getElementById('usersBox').innerHTML=users.map(u=>`<div class="user-item">${u.name}</div>`).join('');}
 
-// رفع الصور الجديد - imgbb
+// رفع الصور الجديد - freeimage.host بدون مفتاح
 async function uploadImg(){
 let i=document.createElement('input');i.type='file';i.accept='image/*';
 i.onchange= async e=>{
   document.getElementById('status').innerText="جاري رفع الصورة...";
   let file = e.target.files[0];
   let formData = new FormData();
-  formData.append("image", file);
+  formData.append("source", file);
   
-  let r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`,{method:"POST",body:formData});
+  let r = await fetch(`https://freeimage.host/api/1/upload?key=6d207e02198a847aa98d0a2a901485a5`,{method:"POST",body:formData});
   let d = await r.json();
   
-  if(d.success){
-    sendMsg(`<img src="${d.data.url}" style="max-width:200px;border-radius:10px">`)
+  if(d.status_code == 200){
+    sendMsg(`<img src="${d.image.url}" style="max-width:200px;border-radius:10px">`)
     document.getElementById('status').innerText="متصل ✅";
   }else{
     alert("فشل الرفع");
