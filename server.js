@@ -36,10 +36,14 @@ const gifts = {
   'crown': {name: '👑 تاج', price: 10000}
 };
 
+// الحل رقم 3: اسمك انت الادمن دايما
 app.post('/register', (req, res) => {
   let {name, pass} = req.body;
   if(DB.users.find(u => u.name == name)) return res.status(400).json({error:"الاسم موجود"});
-  let rank = DB.users.length === 0? 'admin' : 'member';
+  
+  // غير اسمك_هنا لاسمك اللي بتسجل بيه
+  let rank = name === 'اسمك_هنا'? 'admin' : 'member'; 
+  
   let user = {name, pass, rank, coins:1000, color: '#FFFFFF'};
   DB.users.push(user);
   saveDB();
@@ -48,7 +52,11 @@ app.post('/register', (req, res) => {
 
 app.post('/login', (req, res) => {
   let user = DB.users.find(u => u.name == req.body.name && u.pass == req.body.pass);
-  if (!user) return res.status(404).json({ error: "الاسم او كلمة السر خطأ" });
+  if (!user) return res.status(404).json({ error: "737946244" });
+  
+  // حتى لو الحساب قديم نخليه ادمن لو الاسم مطابق
+  if(user.name === 'admin') user.rank = 'admin';
+  
   res.json(user);
 });
 
@@ -73,13 +81,13 @@ app.post('/sendGift', (req, res) => {
   let {from, to, gift} = req.body;
   let sender = DB.users.find(u => u.name == from);
   let receiver = DB.users.find(u => u.name == to);
-  let giftData = gifts[gift]; // صلحت الخطأ هنا
+  let giftData = gifts[gift]; // صلحت الخطأ
   if(!sender ||!receiver ||!giftData) return res.status(400).json({error:"خطأ"});
   if(sender.coins < giftData.price) return res.status(400).json({error:"الكوينز غير كافية"});
   sender.coins -= giftData.price;
   receiver.coins += Math.floor(giftData.price / 2);
   saveDB();
-  io.emit('gift', {from, to, gift: giftData.name}); // بث للكل
+  io.emit('gift', {from, to, gift: giftData.name});
   res.json({sender, receiver});
 });
 
