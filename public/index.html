@@ -1,41 +1,29 @@
 <!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>شات اليمن المطور | الدردشة اليمنية</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<title>شات اليمن المطور</title>
 <style>
 :root{--green:#075e54;--light:#dcf8c6}
-*{box-sizing:border-box}
 body{margin:0;font-family:tahoma;background:#f0f0f0;overflow:hidden}
-.header{background:var(--green);color:#fff;padding:10px 15px;display:flex;justify-content:space-between;align-items:center;position:fixed;width:100%;z-index:10}
-.header a{color:#fff;text-decoration:none;font-size:18px;font-weight:bold}
+.header{background:var(--green);color:#fff;padding:10px 15px;position:fixed;width:100%;z-index:10}
 #wrap{display:flex;height:100vh;padding-top:55px}
-#sidebar{width:280px;background:#fff;border-left:1px solid #ddd;display:flex;flex-direction:column}
-#users_list{flex:1;overflow:auto;padding:10px}
-.user-item{display:flex;align-items:center;padding:8px;border-radius:8px;cursor:pointer}
+#sidebar{width:280px;background:#fff;border-left:1px solid #ddd}
+#users_list{padding:10px}
+.user-item{padding:8px;cursor:pointer}
 .user-item:hover{background:#f5f5f5}
-.user-avatar{width:35px;height:35px;border-radius:50%;background:#ccc;display:flex;align-items:center;justify-content:center;margin-left:10px;font-weight:bold}
-.admin-tag{font-size:10px;background:red;color:#fff;padding:2px 5px;border-radius:4px;margin-right:5px}
 #chat_area{flex:1;display:flex;flex-direction:column}
 #messages{flex:1;overflow:auto;padding:10px;background:#e5ddd5}
 .msg{background:#fff;padding:8px 12px;border-radius:7px;margin:5px 0;max-width:70%}
 .msg.me{background:var(--light);margin-right:auto}
-.msg .time{font-size:11px;color:#999;text-align:left}
-.mention-name{cursor:pointer;color:var(--green);font-weight:bold}
 #chat-input{padding:10px;background:#f0f0f0;display:flex;gap:10px}
-#msg_input{flex:1;padding:10px;border:1px solid #ddd;border-radius:20px}
+#msg_input{flex:1;padding:10px;border-radius:20px;border:1px solid #ddd}
 .btn{background:var(--green);color:#fff;border:none;padding:10px 15px;border-radius:20px;cursor:pointer}
-.hide{display:none}
 #roomid{position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:999;display:flex;align-items:center;justify-content:center}
-@media(max-width:768px){#sidebar{position:absolute;z-index:5;height:100%}}
+.hide{display:none}
 </style></head><body>
-<div class="header"><a href="/">شات اليمن المطور</a><b>أكبر تجمع يمني</b></div>
+<div class="header"><b>شات اليمن المطور</b></div>
 <div id="wrap">
-  <div id="sidebar">
-    <div style="padding:10px;border-bottom:1px solid #ddd"><b>المتصلين</b> <span id="user_count">0</span></div>
-    <div id="users_list"></div>
-  </div>
+  <div id="sidebar"><div id="users_list"></div></div>
   <div id="chat_area">
-    <div id="room_title" style="padding:10px;background:#fff;border-bottom:1px solid #ddd">العام</div>
     <div id="messages"></div>
     <div id="chat-input">
       <input id="msg_input" placeholder="اكتب رسالتك...">
@@ -45,49 +33,46 @@ body{margin:0;font-family:tahoma;background:#f0f0f0;overflow:hidden}
 </div>
 
 <div id="roomid">
-  <div style="text-align:center">
+  <div>
     <h3>أهلاً بك في شات اليمن المطور</h3>
-    <input id="name_input" placeholder="اسمك" style="padding:10px;border-radius:10px;border:1px solid #ddd">
+    <input id="name_input" placeholder="اسمك">
     <button class="btn" type="button" id="guest_btn">دخول</button>
   </div>
 </div>
 
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const socket=io();
-let myId, currentUser, lastMentioned=null;
+let myId;
 
-$('guest_btn').onclick=()=>{
+console.log("السكربت اشتغل");
+
+$('guest_btn').onclick=function(){
   const name=$('name_input').value.trim(); 
-  if(!name)return alert('دخل اسمك'); 
-  currentUser={name,gender:'male'}; 
-  socket.emit('join',currentUser); 
+  if(!name){alert('دخل اسمك'); return;} 
+  socket.emit('join',{name:name,gender:'male'}); 
   $('roomid').classList.add('hide');
+  console.log("تم ارسال join");
 }
 
-function mentionUser(name){
-  lastMentioned=name; 
-  $('msg_input').value=`${name} `; 
-  $('msg_input').focus();
-}
+$('send_btn').onclick=function(){send()};
+$('msg_input').onkeypress=function(e){if(e.key==='Enter'){e.preventDefault(); send()}};
 
-function send(type,content){
-  if(!content.trim())return;
-  socket.emit('message',{type,content,mention:lastMentioned}); 
-  lastMentioned=null; 
+function send(){
+  let txt=$('msg_input').value.trim();
+  if(!txt)return;
+  socket.emit('message',{type:'text',content:txt}); 
   $('msg_input').value='';
 }
 
-$('send_btn').onclick=()=>send('text',$('msg_input').value);
-$('msg_input').onkeypress=e=>{if(e.key==='Enter'){e.preventDefault(); send('text',e.target.value)}}
-
+socket.on('connect',()=>console.log("متصل بالسيرفر"));
 socket.on('you are',d=>{myId=d.id;});
 
 socket.on('message',d=>{
   const div=document.createElement('div');
   div.className='msg '+(d.user.id===myId?'me':'');
-  div.innerHTML=`<b>${d.user.name}</b><br>${d.content}<div class="time">${d.time}</div>`;
+  div.innerHTML=`<b>${d.user.name}</b><br>${d.content}`;
   $('messages').appendChild(div);
   $('messages').scrollTop=$('messages').scrollHeight;
 })
@@ -95,19 +80,8 @@ socket.on('message',d=>{
 socket.on('users list',list=>{
   $('users_list').innerHTML='';
   list.forEach(u=>{
-    const div=document.createElement('div');
-    div.className='user-item';
-    div.innerHTML=`<div class="user-avatar">${u.name.charAt(0)}</div>
-      <span class="mention-name" onclick="mentionUser('${u.name}')">${u.name}</span> ${u.isAdmin?'<span class="admin-tag">مشرف</span>':''}`;
-    $('users_list').appendChild(div);
+    $('users_list').innerHTML+=`<div class="user-item">${u.name}</div>`;
   });
-  $('user_count').innerText=list.length;
-})
-
-socket.on('user joined',u=>{
-  const div=document.createElement('div');
-  div.style.textAlign='center'; div.style.color='#999'; div.style.fontSize='12px';
-  div.innerText=`${u.name} دخل الشات`; $('messages').appendChild(div);
 })
 </script>
 </body></html>
