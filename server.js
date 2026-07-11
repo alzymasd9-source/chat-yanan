@@ -14,10 +14,9 @@ const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
-// السطر المهم 1: عشان socket.io يوصل
-app.use('/socket.io', express.static(path.join(__dirname, 'node_modules/socket.io/client-dist')));
+// هذا اهم سطر
+app.use(express.static(path.join(__dirname, 'public')));
 
 const DB_FILE = './data/chat.db';
 const filter = new Filter({ placeHolder: '*' });
@@ -29,49 +28,37 @@ let users = {};
 
 async function initDB() {
   db = await open({ filename: DB_FILE, driver: sqlite3.Database });
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, room TEXT, type TEXT, content TEXT, user TEXT, time TEXT, reactions TEXT, replyTo INTEGER);
-    CREATE TABLE IF NOT EXISTS rooms (name TEXT PRIMARY KEY);
-  `);
-  const count = await db.get("SELECT COUNT(*) as c FROM rooms");
-  if(count.c === 0) await db.run("INSERT INTO rooms (name) VALUES ('عام'),('تعارف'),('اليمن'),('فلة')");
+  await db.exec(`CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, room TEXT, type TEXT, content TEXT, user TEXT, time TEXT)`);
 }
 initDB();
 
-io.on('connection', async (socket) => {
+io.on('connection', (socket) => {
   socket.on('join', async (u) => {
     const name = u.name ? filter.clean(u.name) : 'زائر';
-    const isAdmin = name.toLowerCase() === 'admin';
-    users[socket.id] = {...u, name, id: socket.id, room: 'عام', isAdmin};
+    users[socket.id] = {name, id: socket.id, room: 'عام'};
     socket.join('عام');
-    io.to('عام').emit('user joined', users[socket.id]);
-    socket.emit('you are', {id: socket.id, isAdmin});
-    socket.emit('users list', Object.values(users).filter(u => u.room === 'عام'));
+    socket.emit('you are', {id: socket.id});
+    socket.emit('users list', Object.values(users));
   });
 
   socket.on('message', async (d) => {
     const user = users[socket.id];
     if (!user || !d.content || d.content.trim() === '') return;
-    try { await messageLimiter.consume(socket.id); } catch { return; }
-    
-    let content = filter.clean(d.content);
     const msg = {
-      type: d.type, content,
-      user: JSON.stringify({name: user.name, gender: user.gender, id: user.id}),
-      time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'}),
-      reactions: JSON.stringify({}), replyTo: null
+      type: d.type, 
+      content: filter.clean(d.content),
+      user: {name: user.name, id: user.id},
+      time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'})
     };
-    const result = await db.run("INSERT INTO messages (room, type, content, user, time, reactions, replyTo) VALUES (?,?,?,?,?,?,?)",
-      user.room, msg.type, msg.content, msg.user, msg.time, msg.reactions, msg.replyTo);
-    const fullMsg = {...msg, id: result.lastID, user: JSON.parse(msg.user)};
-    io.to(user.room).emit('message', fullMsg);
+    io.to(user.room).emit('message', msg);
   });
 
-  socket.on('disconnect', () => { 
-    const u = users[socket.id]; 
-    if(u){ delete users[socket.id]; } 
-  });
+  socket.on('disconnect', () => { delete users[socket.id]; });
+});
+
+app.get('/', (req,res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, ()=>console.log(`شات اليمن المطور شغال على ${PORT}`));
+server.listen(PORT, ()=>console.log(`شغال على ${PORT}`));
