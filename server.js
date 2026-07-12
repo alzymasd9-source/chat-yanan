@@ -18,8 +18,6 @@ db.serialize(()=>{
   db.run("CREATE TABLE IF NOT EXISTS members (id INTEGER PRIMARY KEY, name TEXT UNIQUE, password TEXT, gender TEXT, rank TEXT DEFAULT 'member', avatar TEXT)");
   db.run("CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, room TEXT, from_name TEXT, content TEXT, type TEXT, time TEXT)");
   db.run("CREATE TABLE IF NOT EXISTS private_messages (id INTEGER PRIMARY KEY, room TEXT, from_name TEXT, to_name TEXT, content TEXT, type TEXT, filename TEXT, time TEXT)");
-
-  // حساب المالك الافتراضي
   const adminPass = bcrypt.hashSync('1234', 10);
   db.run("INSERT OR IGNORE INTO members (name,password,gender,rank) VALUES ('admin',?, 'male','owner')", [adminPass]);
 });
@@ -78,7 +76,7 @@ io.on('connection', (socket)=>{
     const room = [socket.name,target].sort().join('_');
     socket.join(room);
     socket.emit('private_opened',{room:room,with:target});
-    db.all("SELECT * FROM private_messages WHERE room=?",,(err,rows)=>{
+    db.all("SELECT * FROM private_messages WHERE room=?",[room],(err,rows)=>{ // <-- تم التعديل هنا
       socket.emit('private_history',rows || []);
     });
   });
