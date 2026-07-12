@@ -1,145 +1,132 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<link rel="shortcut icon" type="image/png" href="/default_images/icon.png" />
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>شات اليمن المطور | دردشة اليمن العربية اكبر تجمع يمني</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-<style type="text/css">
-* { margin: 0; padding: 0; font-family: "Tajawal", tahoma; }
-a { text-decoration: none; }
-body { background: #ededed; }
-.header { background-color: #0f414e; direction: rtl; padding: 5px 0; text-align:center; }
-.header > a { color: #fff; text-decoration: none; font-size: 30px; padding: 5px 10px; }
-.header b { color: #e6e6fa; font-size: 16px; display:block; }
-.nav { background: rgb(255 255 255 / 13%); text-align: center; }
-.nav a { padding: 10px 0; width: 140px; color: #ffffff; font-size: 16px; border-left: 1px solid rgba(55, 124, 168, 0.2); display: inline-block; }
-.nav a:hover { background: #f1f1f1; color: #0f414e; }
-.main { margin: 0 auto; height: auto; text-align: center; background: #00242e url(https://i.imgur.com/8KmCThn.jpg); background-size: cover; background-position: center; background-attachment: fixed; min-height:90vh; }
-.midd { display: inline-block; vertical-align: top; width: 728px; max-width:95%; }
-.room { margin: 60px auto 35%; text-align: center; border: 1px solid #e6e6fa; background: #ffffffb8; border-radius: 15px; overflow: hidden; padding:20px; }
-.room h3 { background: #e3f0f78c; color: #4682b4; padding: 5px 0; font-size: 18px; font-weight:bold; }
-.room p { font-size: 16px; margin: 5px; color: #0069b4; line-height: 1.8; }
-.error { display: none; margin: 10px auto; padding: 8px; font-size: 18px; font-weight: bold; background: #ffffff; color: red; border-radius: 5px; border: 2px solid red; max-width:336px; }
-.login { display: none; background: #f9f9f9ad; width: 336px; max-width:95%; border: 1px solid #e6e6fa; margin: 10px auto; padding:15px; border-radius:15px; }
-#guest_username, #member_password, #member_username { width: 90%; padding: 10px; text-align: center; font-size: 20px; border: 1px solid #ddd; border-radius:8px; margin:5px 0; }
-.gendiv { display: flex; justify-content:center; gap:30px; margin: 15px auto; }
-.male { color: #06f; font-size:20px; }
-.female { color: #e13; font-size:20px; }
-input[type="submit"], .btn { display: block; margin: 10px auto; font-size: 18px; background: #0f414e; color: #fff; padding: 10px 25px; border: 1px solid #0f414e; border-radius: 10px; cursor:pointer; width:200px; }
-input[type="submit"]:hover, .btn:hover { background: #195b86; }
-#guest_btn, #guest_submit_btn { background: #74b20e; border-color:#74b20e; }
-.foot { background:#fff; padding:20px; text-align:right; }
-.foot h3{color:#0f414e; margin-top:15px;}
-.foot p{line-height:1.8; margin:5px 0;}
-.copy { margin: 15px auto; text-align: center; font-size: 14px; }
-h1 { font-size: 27px; text-align: center; color: #fff; padding-top: 5px; }
-h2 { text-align: center; color: #fff; font-size: 16px; padding: 11px; }
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>شات اليمن المطور</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Tajawal",tahoma}
+body{background:#f2f2f2}
 
-/* ===== تصميم الشات كلاسيكي مثل arabsyemen ===== */
-#chat_app{display:none; background:#fff; max-width:1200px; margin:auto; height:100vh;}
-.chat-layout{display:flex; height:100%;}
-.sidebar{width:250px; border-left:1px solid #ccc; background:#f9f9f9;}
-.sidebar-header{background:#0f414e; color:#fff; padding:10px; text-align:center; font-weight:bold;}
-.users-list{height:calc(100% - 40px); overflow-y:auto;}
-.user-item{padding:8px 10px; border-bottom:1px solid #ddd; cursor:pointer; text-align:right;}
-.user-item:hover{background:#e6e6e6;}
-.chat-area{flex:1; display:flex; flex-direction:column; background:#fff;}
-.chat-header{background:#0f414e; color:#fff; padding:10px; display:flex; justify-content:space-between;}
-.messages{flex:1; padding:10px; overflow-y:auto; background:#fff; text-align:right; direction:rtl;}
-.msg{padding:5px 0; border-bottom:1px dotted #ccc; font-size:14px;}
-.msg .name{font-weight:bold; color:#0069b4;}
-.msg .time{font-size:11px; color:#888; margin-right:5px;}
-.chat-input{background:#f1f1f1; padding:8px; display:flex; gap:5px; border-top:1px solid #ccc;}
-.chat-input input{flex:1; padding:8px; border:1px solid #ccc; border-radius:5px;}
-.chat-input button{padding:8px 15px; background:#0f414e; color:#fff; border:none; border-radius:5px; cursor:pointer;}
-#privateBox{position:fixed; bottom:0; left:0; width:300px; height:400px; background:#fff; border:1px solid #ccc; display:none; flex-direction:column; z-index:1000}
-#privateHeader{background:#0f414e; color:#fff; padding:8px; display:flex; justify-content:space-between}
-#privateMessages{flex:1; overflow-y:auto; padding:8px; text-align:right;}
+/* الهيدر العلوي */
+.topbar{background:#0f414e;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:10px;position:fixed;top:0;width:100%;z-index:100;height:50px}
+.topbar .left{display:flex;gap:18px;font-size:20px;align-items:center}
+.topbar .left i{cursor:pointer}
+.topbar .right{display:flex;align-items:center;gap:10px}
+.topbar .avatar{width:35px;height:35px;border-radius:50%;background:#ccc}
+
+/* منطقة الشات */
+.chat-area{padding:60px 0 120px 0;min-height:100vh;background:#e5ddd5}
+.msg-row{display:flex;margin:8px 10px;align-items:flex-start}
+.msg{max-width:80%;background:#fff;padding:8px 12px;border-radius:8px;box-shadow:0 1px 1px rgba(0,0,0,.1)}
+.msg.me{background:#dcf8c6;margin-right:auto}
+.msg .name{font-size:13px;font-weight:700;color:#0f414e;margin-bottom:2px}
+.msg .content{font-size:15px;line-height:1.5}
+.msg .time{font-size:11px;color:#667781;text-align:left;margin-top:3px}
+.avatar{width:40px;height:40px;border-radius:50%;background:#74b20e;color:#fff;display:grid;place-items:center;font-weight:700;margin:0 5px;font-size:15px;flex-shrink:0}
+.msg-time{font-size:11px;color:#999;text-align:center;margin:10px}
+
+/* شريط الارسال */
+.input-bar{position:fixed;bottom:50px;width:100%;background:#f0f0f0;display:flex;align-items:center;padding:8px;gap:8px;border-top:1px solid #ddd}
+.input-bar input{flex:1;padding:10px 15px;border-radius:25px;border:none;outline:none;font-size:16px;background:#fff}
+.input-bar .btn{width:40px;height:40px;border-radius:50%;background:transparent;color:#54656f;border:none;font-size:22px;display:grid;place-items:center;cursor:pointer}
+#sendBtn{background:#0f414e;color:#fff}
+
+/* الشريط السفلي */
+.bottom-nav{position:fixed;bottom:0;width:100%;background:#fff;display:flex;justify-content:space-around;padding:8px 0;border-top:1px solid #ddd;height:50px}
+.bottom-nav div{text-align:center;font-size:11px;color:#54656f;cursor:pointer}
+.bottom-nav i{font-size:22px;display:block;margin-bottom:2px}
+.bottom-nav .active{color:#0f414e}
+
+/* شاشة الدخول */
+#login_page{background:#0f414e;min-height:100vh;color:#fff;text-align:center;padding-top:80px}
+#login_page h1{font-size:28px;margin-bottom:30px}
+.login-box{background:#fff;color:#000;width:90%;max-width:350px;margin:auto;padding:20px;border-radius:15px}
+.login-box input{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:8px;font-size:18px;text-align:center}
+.login-box button{width:100%;padding:12px;background:#74b20e;color:#fff;border:none;border-radius:8px;font-size:18px;margin-top:10px;cursor:pointer}
+.gendiv{display:flex;justify-content:space-around;margin:10px 0}
+#chat_app{display:none}
 </style>
 </head>
 <body>
+
 <div id="login_page">
-  <div class="header"><a href="/">شات اليمن المطور</a> <b>أكبر تجمع يمني</b></div>
-  <div class="main">
-    <nav class="nav"><a href="/">الرئيسية</a><a href="#">سياسة الخصوصية</a><a href="#">شروط الاستخدام</a></nav>
-    <div class="midd">
-      <div class="error" id="error"></div>
-      
-      <div class="login" id="guest_box">
-        <form id="guest_form">
-          <input type="text" id="guest_username" maxlength="50" placeholder="الإسم المستعار" required />
-          <div class="gendiv">
-            <div><input id="male" type="radio" name="gender" value="male" checked /><label for="male" class="male"> ذكر ♂</label></div>
-            <div><input id="female" type="radio" name="gender" value="female" /><label for="female" class="female"> أنثى ♀</label></div>
-          </div>
-          <input type="submit" value="دخول" id="guest_submit_btn" />
-        </form>
-      </div>
-
-      <div class="login" id="member_box">
-        <form id="member_form">
-          <input type="text" id="member_username" maxlength="50" placeholder="الإسم المستعار" required />
-          <input type="password" id="member_password" maxlength="30" placeholder="كلمة المرور" required />
-          <input type="submit" value="دخول" id="member_submit_btn" />
-          <button type="button" class="btn" onclick="register()">تسجيل جديد</button>
-        </form>
-      </div>
-
-      <div id="roomid" class="room">
-        <h3>شات اليمن</h3>
-        <p>غرفة دردشة شباب وبنات اليمن</p>
-        <button class="btn" id="guest_btn">دخول الزوار</button>
-        <button class="btn" id="member_btn">دخول الأعضاء</button>
-      </div>
-      <h1>شات اليمن</h1>
-      <h2>شات اليمن المطور - دردشة اليمن العربية أكبر تجمع يمني</h2>
+  <h1>شات اليمن المطور</h1>
+  <div class="login-box" id="guest_box">
+    <h3>دخول الزوار</h3>
+    <input type="text" id="guest_username" placeholder="الإسم المستعار">
+    <div class="gendiv">
+      <label><input type="radio" name="g" value="male" checked> ذكر</label>
+      <label><input type="radio" name="g" value="female"> أنثى</label>
     </div>
+    <button id="guest_btn">دخول</button>
+    <button onclick="showMember()" style="background:#0f414e">دخول الاعضاء</button>
+  </div>
+  
+  <div class="login-box" id="member_box" style="display:none">
+    <h3>دخول الاعضاء</h3>
+    <input type="text" id="member_username" placeholder="الإسم المستعار">
+    <input type="password" id="member_password" placeholder="كلمة المرور">
+    <button id="member_btn">دخول</button>
+    <button onclick="register()">تسجيل جديد</button>
+    <button onclick="showGuest()" style="background:#ccc;color:#000">رجوع</button>
   </div>
 </div>
 
 <div id="chat_app">
-  <div class="chat-layout">
-    <div class="sidebar">
-      <div class="sidebar-header">المتصلون (<span id="online_count">0</span>)</div>
-      <div class="users-list" id="users_list"></div>
+  <div class="topbar">
+    <i class="fa fa-bars"></i>
+    <div class="left">
+      <i class="fa fa-store"></i>
+      <i class="fa fa-envelope"></i>
+      <i class="fa fa-user-plus"></i>
+      <i class="fa fa-heart"></i>
     </div>
-    <div class="chat-area">
-      <div class="chat-header">
-        <span id="room_title">الدردشة العامة</span>
-        <button id="logout_btn">خروج</button>
-      </div>
-      <div class="messages" id="messages_box"></div>
-      <form class="chat-input" id="chat_form">
-        <input type="text" id="msg_input" placeholder="اكتب رسالتك...">
-        <button type="submit">ارسال</button>
-      </form>
+    <div class="right">
+      <div class="avatar"></div>
     </div>
   </div>
-</div>
 
-<div id="privateBox">
-  <div id="privateHeader"><span id="privateWith"></span><button onclick="closePrivate()">x</button></div>
-  <div id="privateMessages"></div>
-  <form class="chat-input" id="private_form"><input type="text" id="privateMsgInput"><button type="submit">ارسال</button></form>
+  <div class="chat-area" id="messages_box">
+    <div class="msg-time">اليوم</div>
+  </div>
+
+  <form class="input-bar" id="chat_form">
+    <button type="button" class="btn"><i class="fa fa-plus"></i></button>
+    <button type="button" class="btn"><i class="fa fa-smile"></i></button>
+    <input type="text" id="msg_input" placeholder="اكتب هنا...">
+    <button type="button" class="btn"><i class="fa fa-microphone"></i></button>
+    <button type="submit" class="btn" id="sendBtn"><i class="fa fa-paper-plane"></i></button>
+  </form>
+
+  <div class="bottom-nav">
+    <div><i class="fa fa-volume-up"></i>مذيعة</div>
+    <div><i class="fa fa-user"></i>اعضاء</div>
+    <div class="active"><i class="fa fa-home"></i>الغرف</div>
+    <div><i class="fa fa-cog"></i>خيارات</div>
+    <div><i class="fa fa-user-circle"></i>الملف</div>
+  </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io("https://chat-yanan-1.onrender.com");
 const $ = id => document.getElementById(id);
-let me = {}, privateRoom = '', pmWith = null;
+let me = {};
 
-$('guest_btn').onclick = () => { $('roomid').style.display="none"; $('guest_box').style.display="block"; $('member_box').style.display="none"; }
-$('member_btn').onclick = () => { $('roomid').style.display="none"; $('member_box').style.display="block"; $('guest_box').style.display="none"; }
+function showMember(){ $('guest_box').style.display='none'; $('member_box').style.display='block'; }
+function showGuest(){ $('member_box').style.display='none'; $('guest_box').style.display='block'; }
 
+$('guest_btn').onclick = () => {
+  let name = $('guest_username').value;
+  if(name) socket.emit('guest',{name});
+}
+$('member_btn').onclick = () => {
+  socket.emit('login',{name:$('member_username').value,password:$('member_password').value});
+}
 function register(){ socket.emit('register',{name:$('member_username').value,password:$('member_password').value,gender:'male'}); }
-$('guest_form').onsubmit = e => { e.preventDefault(); socket.emit('guest',{name:$('guest_username').value}); }
-$('member_form').onsubmit = e => { e.preventDefault(); socket.emit('login',{name:$('member_username').value,password:$('member_password').value}); }
-
-socket.on('register_ok',msg=>{ alert(msg); });
-socket.on('error_msg',msg=>{ $('error').style.display="block"; $('error').innerText=msg; });
 
 socket.on('login_ok',u=>{
   me=u;
@@ -148,31 +135,26 @@ socket.on('login_ok',u=>{
   socket.emit('join',{name:u.name,room:'main'});
 });
 
-socket.on('users_list',users=>{
-  $('users_list').innerHTML='';
-  $('online_count').innerText=users.filter(u=>u.online).length;
-  users.forEach(u=>{
-    if(u.name!=me.name){
-      $('users_list').innerHTML+=`<div class="user-item" onclick="openPrivate('${u.name}')">${u.online? '🟢' : '⚫'} ${u.name} [${u.rank}]</div>`;
-    }
-  });
+socket.on('chat_message',d=>{
+  let isMe = d.from == me.name;
+  $('messages_box').innerHTML += `
+  <div class="msg-row">
+    ${!isMe ? `<div class="avatar">${d.from.charAt(0)}</div>` : ''}
+    <div class="msg ${isMe?'me':''}">
+      <div class="name">${d.rank? '['+d.rank+'] ':''}${d.from}</div>
+      <div class="content">${d.content}</div>
+      <div class="time">${d.time}</div>
+    </div>
+  </div>`;
+  $('messages_box').scrollTop = $('messages_box').scrollHeight;
 });
 
-socket.on('chat_message',d=> addMsg(d.from,d.content,d.time,d.rank,false));
-socket.on('private_message',m=> addMsg(m.from,m.content,m.time,'',true));
-socket.on('private_opened',d=>{ privateRoom=d.room; pmWith=d.with; $('privateWith').innerText=d.with; $('privateBox').style.display='flex'; });
-socket.on('private_history',msgs=>{ $('privateMessages').innerHTML=''; msgs.forEach(m=> addMsg(m.from_name,m.content,m.time,'',true)); });
-
-function addMsg(from,content,time,rank,pm){
-  let box = pm? $('privateMessages') : $('messages_box');
-  box.innerHTML+=`<div class="msg"><span class="name">${rank? '['+rank+'] ':''}${from}:</span> ${content} <span class="time">${time}</span></div>`;
-  box.scrollTop=box.scrollHeight;
-}
-
-$('chat_form').onsubmit = e => { e.preventDefault(); if($('msg_input').value.trim()=='')return; socket.emit('chat_message',{room:'main',content:$('msg_input').value}); $('msg_input').value=''; };
-$('private_form').onsubmit = e => { e.preventDefault(); if($('privateMsgInput').value.trim()=='')return; socket.emit('private_message',{room:privateRoom,receiver:pmWith,content:$('privateMsgInput').value,msgType:'text'}); $('privateMsgInput').value=''; };
-function openPrivate(target){ socket.emit('open_private',target); }
-function closePrivate(){$('privateBox').style.display='none';}
-$('logout_btn').onclick = () => location.reload();
+$('chat_form').onsubmit = e => { 
+  e.preventDefault(); 
+  if($('msg_input').value.trim()=='')return; 
+  socket.emit('chat_message',{room:'main',content:$('msg_input').value}); 
+  $('msg_input').value=''; 
+};
 </script>
-</body></html>
+</body>
+</html>
