@@ -1,140 +1,138 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require("socket.io");
-const path = require('path');
 const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
 const Filter = require('bad-words');
+const multer = require('multer');
 const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server);
 app.use(express.json());
 app.use(express.static('public'));
+app.use('/uploads', express.static('uploads'));
+
+fs.mkdirSync('./uploads', { recursive: true });
+fs.mkdirSync('./data', { recursive: true });
 
 let db;
 let users = {};
-let rooms = {
-  'عام': {name:'🌎 غرفة العامة 🌎', welcome:'اهلا وسهلا {name} في العام'},
-  'اليمن': {name:'🌎 غرفة اليمن 🌎', welcome:'حياك {name} في غرفة اليمن'},
-  'الجزائر': {name:'🌎 غرفة الجزائر 🌎', welcome:'مرحبا {name}'},
-  'مصر': {name:'🌎 غرفة مصر 🌎', welcome:'اهلا {name}'}
-};
-
-// اسعار المتجر
-let storePrices = { vip: 5000, mod: 15000 };
-
 const filter = new Filter({ placeHolder: '*' });
-fs.mkdirSync('./data', { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: './uploads/',
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+});
+const upload = multer({storage, limits:{fileSize: 20*1024*1024}});
+
+app.post('/upload-private', upload.single('file'), async (req, res)=>{
+  const {room, sender, receiver} = req.body;
+  if(!req.file) return res.status(400).json({error:'لا يوجد ملف'});
+  
+  const url = '/uploads/' + req.file.filename;
+  const time = getTime();
+  const ext = path.extname(req.file.originalname).toLowerCase();
+  
+  let msgType = 'file';
+  if(['.jpg','.jpeg','.png','.gif','.webp'].includes(ext)) msgType = 'image';
+  if(['.mp3','.ogg','.wav','.webm'].includes(ext)) msgType = 'audio';
+  if(['.mp4','.webm'].includes(ext)) msgType = 'video';
+  
+  const result = await db.run(`INSERT INTO private_messages (room, sender, receiver, content, time) VALUES (?,?,?,?,?)`, room, sender, receiver, url, time);
+  const msg = {id: result.lastID, type: msgType, content: url, filename: req.file.originalname, from: sender, time: time};
+  io.to(room).emit('private_message', msg);
+  res.json({ok:true});
+});
 
 async function initDB(){
   db = await open({filename:'./data/chat.db', driver:sqlite3.Database});
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS members (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT UNIQUE, password TEXT, gender TEXT,
-      rank TEXT DEFAULT 'member', credits INTEGER DEFAULT 0,
-      avatar TEXT DEFAULT '', wall TEXT DEFAULT '',
-      status TEXT DEFAULT 'متصل', age INTEGER, country TEXT,
-      private_setting TEXT DEFAULT 'all', join_date TEXT
-    );
-    CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, room TEXT, user TEXT, content TEXT, time TEXT);
-  `);
+  await db.exec(`CREATE TABLE IF NOT EXISTS members (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, password TEXT, gender TEXT, rank TEXT DEFAULT 'member', credits INTEGER DEFAULT 0, avatar TEXT DEFAULT '')`);
+  await db.exec(`CREATE TABLE IF NOT EXISTS shortcuts (id INTEGER PRIMARY KEY, key TEXT UNIQUE, value TEXT)`);
+  await db.exec(`CREATE TABLE IF NOT EXISTS private_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, room TEXT, sender TEXT, receiver TEXT, content TEXT, time TEXT)`);
+  await db.exec(`CREATE TABLE IF NOT EXISTS reports (id INTEGER PRIMARY KEY AUTOINCREMENT, reporter TEXT, reported TEXT, room TEXT, msgId INTEGER, reason TEXT, content TEXT, time TEXT, status TEXT DEFAULT 'pending')`);
 }
 initDB();
 
-// نظام الصلاحيات
-const permissions = {
-  guest: {chat:true, voice:true, image:false, youtube:false, profile:false},
-  member: {chat:true, voice:true, image:false, youtube:false, profile:false},
-  vip: {chat:true, voice:true, image:true, youtube:true, profile:true, color:true},
-  mod: {chat:true, voice:true, image:true, youtube:true, profile:true, kick:true, mute:true, delete:true},
-  admin: {chat:true, voice:true, image:true, youtube:true, profile:true, kick:true, mute:true, delete:true, edit_name:true},
-  owner: {all:true}
-};
-
-// نظام الرصيد التلقائي: +1 💵 كل 90 ثانية
-setInterval(async () => {
-  for(let id in users){
-    const u = users[id];
-    if(u && u.rank!== 'guest'){
-      await db.run("UPDATE members SET credits = credits + 1 WHERE name =?", u.name);
-      u.credits = (u.credits || 0) + 1;
-      io.to(id).emit('credits_update', u.credits);
-    }
-  }
-}, 90000);
+function updateUserList(room){
+  const roomUsers = Object.values(users).filter(x=>x.room===room);
+  io.to(room).emit('users_list', roomUsers);
+}
 
 io.on('connection', socket=>{
-  console.log('مستخدم اتصل:', socket.id);
-
   socket.on('join', async u=>{
     const user = await db.get("SELECT * FROM members WHERE name=?", u.name);
-    if(!user) return;
     users[socket.id] = {...u,...user, id:socket.id, room:u.room};
     socket.join(u.room);
-
-    const welcome = rooms[u.room].welcome.replace('{name}', u.name);
-    socket.emit('system', welcome);
-    socket.emit('credits_update', user.credits || 0);
-
-    io.to(u.room).emit('users list', Object.values(users).filter(x=>x.room===u.room));
+    updateUserList(u.room);
   });
 
-  socket.on('message', async d=>{
-    const user = users[socket.id];
-    if(!user || user.muted) return socket.emit('error','انت مكتوم');
+  socket.on('open_private', async (targetName)=>{
+    const me = users[socket.id];
+    const target = Object.values(users).find(u=>u.name===targetName);
+    if(!target) return socket.emit('error','العضو غير متصل');
+    const roomId = 'pm_' + [me.name, targetName].sort().join('_');
+    socket.join(roomId);
+    const oldMsgs = await db.all("SELECT * FROM private_messages WHERE room=? ORDER BY id ASC", roomId);
+    socket.emit('private_history', oldMsgs);
+    io.to(target.id).emit('private_invite', {from: me.name, room: roomId});
+    io.to(target.id).emit('private_notification', {from: me.name});
+    socket.emit('private_opened', {room: roomId, with: targetName});
+  });
 
-    const perm = permissions[user.rank] || permissions.member;
-    if(d.type==='image' &&!perm.image) return socket.emit('error','رتبة مميز مطلوبة');
-
-    let content = filter.clean(d.content);
+  socket.on('private_message', async d=>{
+    const me = users[socket.id]; if(!me) return;
+    let content = d.content; let type = d.msgType || 'text';
+    if(type==='text'){
+      const shortcuts = await db.all("SELECT * FROM shortcuts");
+      shortcuts.forEach(s=> content = content.replace(new RegExp(`\\b${s.key}\\b`, 'g'), s.value));
+      content = filter.clean(content);
+    }
     const time = getTime();
-    const msg = {id:Date.now(), content, user, time};
-
-    await db.run("INSERT INTO messages (room,user,content,time) VALUES (?,?,?,?)",
-      user.room, JSON.stringify(user), content, time);
-
-    io.to(user.room).emit('message', msg);
+    const [user1, user2] = d.room.replace('pm_','').split('_');
+    const receiver = user1===me.name? user2 : user1;
+    const result = await db.run(`INSERT INTO private_messages (room, sender, receiver, content, time) VALUES (?,?,?,?,?)`, d.room, me.name, receiver, content, time);
+    const msg = {id: result.lastID, type: type, content: content, from: me.name, time: time};
+    io.to(d.room).emit('private_message', msg);
+    const receiverSocket = Object.keys(users).find(id => users[id].name === receiver);
+    if(receiverSocket) io.to(receiverSocket).emit('private_notification', {from: me.name});
   });
 
-  // المتجر
-  socket.on('buy_rank', async (rank)=>{
-    const user = users[socket.id];
-    const price = storePrices[rank];
-    if(user.credits < price) return socket.emit('store_error', 'رصيدك غير كافي');
-
-    await db.run("UPDATE members SET credits = credits -?, rank =? WHERE name =?",
-      price, rank, user.name);
-
-    user.credits -= price;
-    user.rank = rank;
-
-    socket.emit('buy_success', `تم شراء رتبة ${rank} بنجاح`);
-    socket.emit('credits_update', user.credits);
-    io.to(user.room).emit('system', `[ ${user.name} ترقى الى رتبة ${rank} ]`);
+  socket.on('delete_private_msg', async d=>{
+    await db.run("DELETE FROM private_messages WHERE id=?", d.msgId);
+    d.forEveryone ? io.to(d.room).emit('delete_private_message', d.msgId) : socket.emit('delete_private_message', d.msgId);
   });
 
-  // تسجيل
-  socket.on('register', async data=>{
-    try{
-      await db.run("INSERT INTO members (name,password,gender,join_date,credits) VALUES (?,?,?,?,0)",
-        data.name,data.password,data.gender,new Date().toLocaleDateString());
-      socket.emit('register_ok');
-    }catch{e=>socket.emit('error','الاسم مستخدم')}
+  socket.on('report_private_msg', async d=>{
+    const me = users[socket.id]; if(!me) return;
+    const msg = await db.get("SELECT * FROM private_messages WHERE id=?", d.msgId);
+    if(!msg) return;
+    await db.run(`INSERT INTO reports (reporter, reported, room, msgId, reason, content, time) VALUES (?,?,?,?,?,?,?)`, me.name, d.reported, d.room, d.msgId, d.reason, msg.content, getTime());
+    const admins = Object.values(users).filter(u=>u.rank==='owner' || u.rank==='supervisor');
+    admins.forEach(admin=> io.to(admin.id).emit('new_report', {reporter: me.name, reported: d.reported, reason: d.reason}));
+    socket.emit('system', 'تم ارسال البلاغ للإدارة بنجاح');
   });
 
-  socket.on('login', async data=>{
-    const m = await db.get("SELECT * FROM members WHERE name=? AND password=?", data.name, data.password);
-    if(m) socket.emit('login_ok', m); else socket.emit('error','الاسم او كلمة السر خطأ');
+  socket.on('get_reports', async ()=>{
+    const me = users[socket.id];
+    if(me.rank!=='owner' && me.rank!=='supervisor') return;
+    const reports = await db.all("SELECT * FROM reports WHERE status='pending' ORDER BY id DESC");
+    socket.emit('reports_list', reports);
   });
 
-  socket.on('disconnect', ()=>{
-    if(users[socket.id]?.rank === 'guest') users[socket.id].credits = 0;
-    delete users[socket.id];
+  socket.on('close_report', async d=>{
+    const me = users[socket.id];
+    if(me.rank!=='owner' && me.rank!=='supervisor') return;
+    await db.run("UPDATE reports SET status='closed' WHERE id=?", d.reportId);
+    socket.emit('system', 'تم اغلاق البلاغ');
   });
+
+  socket.on('register', async data=>{ await db.run("INSERT INTO members (name,password,gender) VALUES (?,?,?)", data.name,data.password,data.gender); socket.emit('register_ok'); });
+  socket.on('login', async data=>{ const m = await db.get("SELECT * FROM members WHERE name=? AND password=?", data.name, data.password); m? socket.emit('login_ok', m) : socket.emit('error','خطأ'); });
+  socket.on('disconnect', ()=>{ const user = users[socket.id]; if(user) updateUserList(user.room); delete users[socket.id]; });
 });
 
-function getTime(){const d=new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')} ${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`}
+function getTime(){const d=new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`}
 server.listen(process.env.PORT || 3000);
