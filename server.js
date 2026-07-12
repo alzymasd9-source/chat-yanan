@@ -11,18 +11,15 @@ const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs'); // <-- مهم
+const fs = require('fs');
+
+// انشئ المجلدات لو مش موجودة
+if (!fs.existsSync('./data')) fs.mkdirSync('./data');
+if (!fs.existsSync('./uploads')) fs.mkdirSync('./uploads');
 
 app.use(express.static('public'));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
-app.use('/data', express.static('data'));
-
-// ===== الحل هنا =====
-// انشئ مجلد data و uploads لو مش موجود
-if (!fs.existsSync('./data')) fs.mkdirSync('./data');
-if (!fs.existsSync('./uploads')) fs.mkdirSync('./uploads');
-// ===================
 
 const db = new sqlite3.Database('./data/chat.db');
 db.serialize(()=>{
@@ -54,7 +51,7 @@ io.on('connection', (socket)=>{
     db.get("SELECT * FROM members WHERE name=?",[data.name], async (err,row)=>{
       if(row && await bcrypt.compare(data.password,row.password)){
         onlineUsers[row.name]=socket.id;
-        socket.name = row.name; // <-- مهم
+        socket.name = row.name;
         socket.emit('login_ok',row);
       } else socket.emit('error_msg','خطا في الدخول');
     });
@@ -63,7 +60,7 @@ io.on('connection', (socket)=>{
   socket.on('guest', (data)=>{
     let guest = {name:data.name,rank:'guest'};
     onlineUsers[guest.name]=socket.id;
-    socket.name = guest.name; // <-- مهم
+    socket.name = guest.name;
     socket.emit('login_ok',guest);
   });
 
