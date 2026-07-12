@@ -5,13 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>شات اليمن العربي</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Tajawal",tahoma}
 body{background:#fff;overflow:hidden}
 
 /* الشريط العلوي */
-.topbar{background:#0a3d48;color:#fff;display:flex;justify-content:center;align-items:center;position:fixed;top:0;width:100%;z-index:100;height:44px;font-size:15px;letter-spacing:1px}
+.topbar{background:#0a3d48;color:#fff;display:flex;justify-content:center;align-items:center;position:fixed;top:0;width:100%;z-index:100;height:44px;font-size:15px}
 
 /* منطقة الشات */
 .chat-area{padding:44px 0 105px 0;height:100vh;overflow-y:auto;background:#fff}
@@ -23,17 +22,19 @@ body{background:#fff;overflow:hidden}
 
 /* الشريط السفلي */
 .bottom-nav{position:fixed;bottom:0;width:100%;background:#fff;display:flex;justify-content:space-around;align-items:center;padding:8px 0;border-top:1px solid #e0e0e0;height:50px}
-.bottom-nav div{text-align:center;font-size:13px;color:#777;cursor:pointer}
-.bottom-nav i{display:none} /* مخفي مثل الصورة */
+.bottom-nav div{text-align:center;font-size:13px;color:#777}
+.bottom-nav .active{color:#0a3d48;font-weight:700}
 
 /* شاشة الدخول */
-#login_page{background:#0a3d48;min-height:100vh;color:#fff;text-align:center;padding-top:100px}
-#login_page h1{font-size:24px;margin-bottom:30px}
+#login_page{background:#0a3d48;min-height:100vh;color:#fff;text-align:center;padding-top:80px}
+#login_page h1{font-size:24px;margin-bottom:20px}
 .login-box{background:#fff;color:#000;width:90%;max-width:330px;margin:auto;padding:20px;border-radius:8px}
 .login-box input{width:100%;padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:5px;font-size:16px;text-align:center}
 .login-box button{width:100%;padding:12px;background:#5cb85c;color:#fff;border:none;border-radius:5px;font-size:17px;margin-top:10px;cursor:pointer}
+.login-box button:active{background:#449d44}
 .gendiv{display:flex;justify-content:space-around;margin:10px 0;color:#000;font-size:15px}
 #chat_app{display:none}
+.error{color:red;font-size:13px;margin-top:5px;display:none}
 </style>
 </head>
 <body>
@@ -48,7 +49,8 @@ body{background:#fff;overflow:hidden}
       <label><input type="radio" name="g" value="female"> أنثى</label>
     </div>
     <button id="guest_btn">دخول</button>
-    <button onclick="showMember()" style="background:#0a3d48">دخول الاعضاء</button>
+    <button id="show_member_btn" style="background:#0a3d48">دخول الاعضاء</button>
+    <div class="error" id="error1"></div>
   </div>
 
   <div class="login-box" id="member_box" style="display:none">
@@ -56,8 +58,9 @@ body{background:#fff;overflow:hidden}
     <input type="text" id="member_username" placeholder="الإسم المستعار">
     <input type="password" id="member_password" placeholder="كلمة المرور">
     <button id="member_btn">دخول</button>
-    <button onclick="register()">تسجيل جديد</button>
-    <button onclick="showGuest()" style="background:#ccc;color:#000">رجوع</button>
+    <button id="register_btn">تسجيل جديد</button>
+    <button id="show_guest_btn" style="background:#ccc;color:#000">رجوع</button>
+    <div class="error" id="error2"></div>
   </div>
 </div>
 
@@ -67,16 +70,90 @@ body{background:#fff;overflow:hidden}
   <div class="chat-area" id="messages_box"></div>
 
   <form class="input-bar" id="chat_form">
-    <input type="text" id="msg_input" placeholder="اكتب هنا...">
+    <input type="text" id="msg_input" placeholder="اكتب هنا..." autocomplete="off">
   </form>
 
   <div class="bottom-nav">
     <div>مذيعة</div>
     <div>اعضاء</div>
-    <div style="color:#0a3d48;font-weight:700">الغرف</div>
+    <div class="active">الغرف</div>
     <div>خيارات</div>
     <div>الملف</div>
   </div>
 </div>
 
-<script
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io("https://chat-yanan-1.onrender.com");
+const $ = id => document.getElementById(id);
+let me = {};
+
+function showError(id,msg){ $(id).innerText=msg; $(id).style.display='block'; setTimeout(()=>$(id).style.display='none',3000) }
+
+$('show_member_btn').onclick = ()=>{ $('guest_box').style.display='none'; $('member_box').style.display='block'; }
+$('show_guest_btn').onclick = ()=>{ $('member_box').style.display='none'; $('guest_box').style.display='block'; }
+
+$('guest_btn').onclick = () => {
+  let name = $('guest_username').value.trim();
+  let gender = document.querySelector('input[name="g"]:checked').value;
+  if(name.length < 3) return showError('error1','الاسم لازم 3 حروف');
+  socket.emit('guest',{name, gender});
+}
+
+$('member_btn').onclick = () => {
+  let name = $('member_username').value.trim();
+  let pass = $('member_password').value.trim();
+  if(!name || !pass) return showError('error2','ادخل الاسم وكلمة السر');
+  socket.emit('login',{name,password:pass});
+}
+
+$('register_btn').onclick = ()=>{
+  let name = $('member_username').value.trim();
+  let pass = $('member_password').value.trim();
+  if(!name || !pass) return showError('error2','ادخل الاسم وكلمة السر');
+  socket.emit('register',{name,password:pass,gender:'male'});
+}
+
+socket.on('connect',()=>{ console.log('connected') });
+
+socket.on('login_ok',u=>{
+  me=u;
+  $('login_page').style.display='none';
+  $('chat_app').style.display='block';
+  socket.emit('join',{name:u.name,room:'main'});
+});
+
+socket.on('register_ok',msg=>{ alert(msg); $('show_guest_btn').click(); });
+
+socket.on('error_msg',msg=>{ 
+  if($('chat_app').style.display=='block') alert(msg);
+  else showError('error1',msg) || showError('error2',msg);
+});
+
+socket.on('chat_message',d=>{
+  $('messages_box').innerHTML += `
+  <div style="padding:10px 15px;border-bottom:1px solid #f0f0f0">
+    <div style="display:flex;justify-content:space-between">
+      <div style="color:#0066ff;font-weight:700">${d.from} <span style="color:#666;font-weight:400">[${d.rank||'عضو'}]</span></div>
+      <div style="color:#999;font-size:12px">${d.time} م</div>
+    </div>
+    <div style="margin-top:5px;color:#000">${d.content}</div>
+  </div>`;
+  $('messages_box').scrollTop = $('messages_box').scrollHeight;
+});
+
+$('chat_form').onsubmit = e => {
+  e.preventDefault();
+  let val = $('msg_input').value.trim();
+  if(val=='')return;
+  socket.emit('chat_message',{room:'main',content:val});
+  $('msg_input').value='';
+};
+
+// عشان يشتغل Enter
+$('msg_input').addEventListener('keypress', e=>{
+  if(e.key==='Enter') $('chat_form').dispatchEvent(new Event('submit'))
+})
+</script>
+</body>
+</html>
