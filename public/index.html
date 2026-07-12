@@ -5,20 +5,20 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>شات اليمن المطور | دردشة اليمن العربية اكبر تجمع يمني</title>
-<meta name="description" content="شات اليمن المطور اكبر تجمع يمني علي الانترنت" />
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-<style>
+<style type="text/css">
 * { margin: 0; padding: 0; font-family: "Tajawal", tahoma; }
+a { text-decoration: none; }
 body { background: #ededed; }
 .header { background-color: #0f414e; direction: rtl; padding: 5px 0; text-align:center; }
 .header > a { color: #fff; text-decoration: none; font-size: 30px; padding: 5px 10px; }
 .header b { color: #e6e6fa; font-size: 16px; display:block; }
 .nav { background: rgb(255 255 255 / 13%); text-align: center; }
-.nav a { padding: 10px 0; width: 140px; color: #ffffff; font-size: 16px; border-left: 1px solid rgba(55, 124, 168, 0.2); display: inline-block; text-decoration:none; }
+.nav a { padding: 10px 0; width: 140px; color: #ffffff; font-size: 16px; border-left: 1px solid rgba(55, 124, 168, 0.2); display: inline-block; }
 .nav a:hover { background: #f1f1f1; color: #0f414e; }
-.main { margin: 0 auto; height: auto; text-align: center; background: #00242e url(https://i.imgur.com/8KmCThn.jpg); background-size: cover; background-position: center; background-attachment: fixed; min-height:85vh; padding-bottom:30px; }
+.main { margin: 0 auto; height: auto; text-align: center; background: #00242e url(https://i.imgur.com/8KmCThn.jpg); background-size: cover; background-position: center; background-attachment: fixed; min-height:90vh; }
 .midd { display: inline-block; vertical-align: top; width: 728px; max-width:95%; }
-.room { margin: 60px auto; text-align: center; border: 1px solid #e6e6fa; background: #ffffffb8; border-radius: 15px; overflow: hidden; padding:20px; }
+.room { margin: 60px auto 35%; text-align: center; border: 1px solid #e6e6fa; background: #ffffffb8; border-radius: 15px; overflow: hidden; padding:20px; }
 .room h3 { background: #e3f0f78c; color: #4682b4; padding: 5px 0; font-size: 18px; font-weight:bold; }
 .room p { font-size: 16px; margin: 5px; color: #0069b4; line-height: 1.8; }
 .error { display: none; margin: 10px auto; padding: 8px; font-size: 18px; font-weight: bold; background: #ffffff; color: red; border-radius: 5px; border: 2px solid red; max-width:336px; }
@@ -34,31 +34,29 @@ input[type="submit"]:hover, .btn:hover { background: #195b86; }
 .foot h3{color:#0f414e; margin-top:15px;}
 .foot p{line-height:1.8; margin:5px 0;}
 .copy { margin: 15px auto; text-align: center; font-size: 14px; }
-h1 { text-align: center; color: #fff; padding-top: 5px; }
+h1 { font-size: 27px; text-align: center; color: #fff; padding-top: 5px; }
 h2 { text-align: center; color: #fff; font-size: 16px; padding: 11px; }
 
-/* الشات */
+/* ===== تصميم الشات كلاسيكي مثل arabsyemen ===== */
 #chat_app{display:none; background:#fff; max-width:1200px; margin:auto; height:100vh;}
 .chat-layout{display:flex; height:100%;}
-.sidebar{width:320px; border-left:1px solid #ddd; display:flex; flex-direction:column; background:#f5f6f6;}
-.sidebar-header{background:#0f414e; color:#fff; padding:12px; font-weight:700;}
-.users-list{flex:1; overflow-y:auto; text-align:right;}
-.user-item{padding:10px 12px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #eee; cursor:pointer;}
-.user-item:hover{background:#e0e0e0;}
-.user-avatar{width:40px; height:40px; border-radius:50%; background:#74b20e; color:#fff; display:grid; place-items:center; font-weight:700;}
-.chat-area{flex:1; display:flex; flex-direction:column; background:#e5ddd5;}
-.chat-header{background:#0f414e; color:#fff; padding:12px 15px; display:flex; justify-content:space-between;}
-.messages{flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;}
-.msg{max-width:75%; padding:8px 12px; border-radius:8px; background:#fff; align-self:flex-end;}
-.msg.me{background:#dcf8c6; align-self:flex-start;}
-.msg .name{font-size:13px; font-weight:700; margin-bottom:4px; color:#0f414e;}
-.msg .time{font-size:11px; color:#667781; text-align:left; margin-top:3px;}
-.chat-input{background:#f0f0f0; padding:10px; display:flex; gap:8px;}
-.chat-input input{flex:1; padding:12px 15px; border-radius:20px; border:none; outline:none; font-size:16px;}
-.chat-input button{width:42px; height:42px; border-radius:50%; background:#74b20e; color:#fff; font-size:18px; border:none;}
-#privateBox{position:fixed; bottom:0; right:0; width:350px; height:500px; background:#fff; border:1px solid #ccc; display:none; flex-direction:column; z-index:1000; border-radius:10px 0 0 0}
-#privateHeader{background:#0f414e; color:#fff; padding:10px; display:flex; justify-content:space-between}
-#privateMessages{flex:1; overflow-y:auto; padding:10px; background:#e5ddd5}
+.sidebar{width:250px; border-left:1px solid #ccc; background:#f9f9f9;}
+.sidebar-header{background:#0f414e; color:#fff; padding:10px; text-align:center; font-weight:bold;}
+.users-list{height:calc(100% - 40px); overflow-y:auto;}
+.user-item{padding:8px 10px; border-bottom:1px solid #ddd; cursor:pointer; text-align:right;}
+.user-item:hover{background:#e6e6e6;}
+.chat-area{flex:1; display:flex; flex-direction:column; background:#fff;}
+.chat-header{background:#0f414e; color:#fff; padding:10px; display:flex; justify-content:space-between;}
+.messages{flex:1; padding:10px; overflow-y:auto; background:#fff; text-align:right; direction:rtl;}
+.msg{padding:5px 0; border-bottom:1px dotted #ccc; font-size:14px;}
+.msg .name{font-weight:bold; color:#0069b4;}
+.msg .time{font-size:11px; color:#888; margin-right:5px;}
+.chat-input{background:#f1f1f1; padding:8px; display:flex; gap:5px; border-top:1px solid #ccc;}
+.chat-input input{flex:1; padding:8px; border:1px solid #ccc; border-radius:5px;}
+.chat-input button{padding:8px 15px; background:#0f414e; color:#fff; border:none; border-radius:5px; cursor:pointer;}
+#privateBox{position:fixed; bottom:0; left:0; width:300px; height:400px; background:#fff; border:1px solid #ccc; display:none; flex-direction:column; z-index:1000}
+#privateHeader{background:#0f414e; color:#fff; padding:8px; display:flex; justify-content:space-between}
+#privateMessages{flex:1; overflow-y:auto; padding:8px; text-align:right;}
 </style>
 </head>
 <body>
@@ -99,39 +97,32 @@ h2 { text-align: center; color: #fff; font-size: 16px; padding: 11px; }
       <h2>شات اليمن المطور - دردشة اليمن العربية أكبر تجمع يمني</h2>
     </div>
   </div>
-
-  <div class="foot">
-    <h3>الأسئلة الشائعة</h3><hr />
-    <p>يمكنك الدخول بدون تسجيل او التسجيل للاستمتاع بجميع المميزات</p>
-    <div class="copy"><span>&copy; شات اليمن المطور</span></div>
-  </div>
 </div>
 
 <div id="chat_app">
   <div class="chat-layout">
-    <div class="sidebar" id="sidebar">
-      <div class="sidebar-header">المتصلون <span id="online_count">0</span></div>
+    <div class="sidebar">
+      <div class="sidebar-header">المتصلون (<span id="online_count">0</span>)</div>
       <div class="users-list" id="users_list"></div>
     </div>
     <div class="chat-area">
       <div class="chat-header">
-        <button class="btn" style="width:auto;padding:5px 10px" id="show_users_btn">الاعضاء</button>
-        <h4 id="room_title">الدردشة العامة</h4>
-        <button class="btn" style="width:auto;padding:5px 10px" id="logout_btn">خروج</button>
+        <span id="room_title">الدردشة العامة</span>
+        <button id="logout_btn">خروج</button>
       </div>
       <div class="messages" id="messages_box"></div>
       <form class="chat-input" id="chat_form">
         <input type="text" id="msg_input" placeholder="اكتب رسالتك...">
-        <button type="submit">➤</button>
+        <button type="submit">ارسال</button>
       </form>
     </div>
   </div>
 </div>
 
 <div id="privateBox">
-  <div id="privateHeader"><span id="privateWith"></span><button onclick="closePrivate()" style="background:none;color:#fff;border:none;font-size:20px">x</button></div>
+  <div id="privateHeader"><span id="privateWith"></span><button onclick="closePrivate()">x</button></div>
   <div id="privateMessages"></div>
-  <form class="chat-input" id="private_form"><input type="text" id="privateMsgInput"><button type="submit">➤</button></form>
+  <form class="chat-input" id="private_form"><input type="text" id="privateMsgInput"><button type="submit">ارسال</button></form>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -162,8 +153,7 @@ socket.on('users_list',users=>{
   $('online_count').innerText=users.filter(u=>u.online).length;
   users.forEach(u=>{
     if(u.name!=me.name){
-      let status = u.online? '🟢' : '⚫';
-      $('users_list').innerHTML+=`<div class="user-item" onclick="openPrivate('${u.name}')"><div class="user-avatar">${u.name.charAt(0)}</div><div>${status} ${u.name} [${u.rank}]</div></div>`;
+      $('users_list').innerHTML+=`<div class="user-item" onclick="openPrivate('${u.name}')">${u.online? '🟢' : '⚫'} ${u.name} [${u.rank}]</div>`;
     }
   });
 });
@@ -175,8 +165,7 @@ socket.on('private_history',msgs=>{ $('privateMessages').innerHTML=''; msgs.forE
 
 function addMsg(from,content,time,rank,pm){
   let box = pm? $('privateMessages') : $('messages_box');
-  let cls = from==me.name? 'me' : 'other';
-  box.innerHTML+=`<div class="msg ${cls}"><div class="name">${rank? '['+rank+'] ':''}${from}</div><div>${content}</div><div class="time">${time}</div></div>`;
+  box.innerHTML+=`<div class="msg"><span class="name">${rank? '['+rank+'] ':''}${from}:</span> ${content} <span class="time">${time}</span></div>`;
   box.scrollTop=box.scrollHeight;
 }
 
@@ -185,6 +174,5 @@ $('private_form').onsubmit = e => { e.preventDefault(); if($('privateMsgInput').
 function openPrivate(target){ socket.emit('open_private',target); }
 function closePrivate(){$('privateBox').style.display='none';}
 $('logout_btn').onclick = () => location.reload();
-$('show_users_btn').onclick = () => $('sidebar').classList.toggle('active');
 </script>
 </body></html>
