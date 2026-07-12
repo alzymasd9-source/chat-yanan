@@ -13,16 +13,19 @@ button{cursor:pointer;background:#e94560;color:#fff}
 #chatBox,#userList{height:300px;overflow-y:auto;border:1px solid #fff;padding:10px;background:#0f0f1a;text-align:right;border-radius:10px;margin-bottom:10px}
 .msg{margin:5px 0;padding:8px;border-radius:10px;background:#2a2a3e;text-align:right}
 .user{display:block;padding:10px;margin:5px;background:#2a2a3e;cursor:pointer;border-radius:10px}
+.user:hover{background:#e94560}
 #privateBox{position:fixed;bottom:0;left:0;right:0;width:100%;height:70%;background:#1a1a2e;border-top:3px solid #e94560;display:none;flex-direction:column;z-index:1000}
 #privateHeader{background:#e94560;padding:10px;font-weight:bold;display:flex;justify-content:space-between}
 #privateMessages{flex:1;overflow-y:auto;padding:10px;background:#0f0f1a}
 .privateMsg{margin:5px 0;padding:8px;border-radius:10px;max-width:80%}
 .me{background:#e94560;margin-right:auto;text-align:right}
 .them{background:#2a2a3e;margin-left:auto;text-align:left}
+#privateInput{display:flex;padding:10px}
 </style>
 </head>
 <body>
 <h1>شات اليمن المطور 🇾🇪</h1>
+
 <div id="login">
   <input id="name" placeholder="الاسم">
   <input id="pass" type="password" placeholder="كلمة السر">
@@ -50,19 +53,59 @@ button{cursor:pointer;background:#e94560;color:#fff}
 <div id="privateBox">
   <div id="privateHeader"><span id="privateWith"></span><button onclick="closePrivate()">x</button></div>
   <div id="privateMessages"></div>
-  <div><input id="privateMsgInput"><button onclick="sendPrivateMsg()">ارسال</button></div>
+  <div id="privateInput"><input id="privateMsgInput" style="flex:1"><button onclick="sendPrivateMsg()">ارسال</button></div>
 </div>
 
 <script>
 const socket = io("https://chat-yanan-1.onrender.com");
 let me = {};
+let privateRoom = '';
+
 function login(){ socket.emit('login',{name:name.value,password:pass.value}); }
 function register(){ socket.emit('register',{name:name.value,password:pass.value,gender:gender.value}); }
 function guest(){ socket.emit('guest',{name:'زائر'+Math.floor(Math.random()*1000)}); }
-socket.on('login_ok',u=>{ me=u; document.getElementById('login').style.display='none'; document.getElementById('chat').style.display='block'; socket.emit('join',{name:u.name,room:'main'}); });
-socket.on('users_list',users=>{ userList.innerHTML=''; users.forEach(u=>{ if(u.name!=me.name){ userList.innerHTML+=`<div class="user" onclick="openPrivate('${u.name}')">${u.name}</div>`; } }); });
-socket.on('chat_message',d=>{ chatBox.innerHTML+=`<div class="msg"><b>${d.from}:</b> ${d.content}</div>`; chatBox.scrollTop=chatBox.scrollHeight; });
-function sendMsg(){ socket.emit('chat_message',{room:'main',content:msg.value}); msg.value=''; }
+
+socket.on('register_ok',msg=>{ alert(msg); });
+socket.on('error_msg',msg=>{ alert(msg); });
+
+socket.on('login_ok',u=>{
+  me=u;
+  document.getElementById('login').style.display='none';
+  document.getElementById('chat').style.display='block';
+  socket.emit('join',{name:u.name,room:'main'});
+});
+
+socket.on('users_list',users=>{
+  userList.innerHTML='';
+  users.forEach(u=>{
+    let status = u.online? '🟢' : '⚫';
+    if(u.name!=me.name){
+      userList.innerHTML+=`<div class="user" onclick="openPrivate('${u.name}')">${status} ${u.name} [${u.rank}]</div>`;
+    }
+  });
+});
+
+socket.on('chat_message',d=>{
+  chatBox.innerHTML+=`<div class="msg"><b>[${d.rank}] ${d.from}:</b> ${d.content} <small>${d.time}</small></div>`;
+  chatBox.scrollTop=chatBox.scrollHeight;
+});
+function sendMsg(){ if(msg.value.trim()=='')return; socket.emit('chat_message',{room:'main',content:msg.value}); msg.value=''; }
+
+function openPrivate(target){
+  document.getElementById('privateWith').innerText=target;
+  document.getElementById('privateBox').style.display='flex';
+  socket.emit('open_private',target);
+}
+socket.on('private_opened',d=>{ privateRoom=d.room; });
+socket.on('private_history',msgs=>{ privateMessages.innerHTML=''; msgs.forEach(m=> addPrivateMsg(m)); });
+socket.on('private_message',m=>{ addPrivateMsg(m); });
+
+function addPrivateMsg(m){
+  privateMessages.innerHTML+=`<div class="privateMsg ${m.from==me.name?'me':'them'}"><b>${m.from}</b><br>${m.content}<div style="font-size:10px">${m.time}</div></div>`;
+  privateMessages.scrollTop=privateMessages.scrollHeight;
+}
+function sendPrivateMsg(){ if(privateMsgInput.value.trim()=='')return; socket.emit('private_message',{room:privateRoom,receiver:document.getElementById('privateWith').innerText,content:privateMsgInput.value,msgType:'text'}); privateMsgInput.value=''; }
+function closePrivate(){document.getElementById('privateBox').style.display='none';}
 </script>
 </body>
 </html>
