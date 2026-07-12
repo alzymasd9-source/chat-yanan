@@ -20,6 +20,7 @@ fs.mkdirSync('./data', { recursive: true });
 
 let db;
 let users = {};
+let liveStream = {active: false, host: null, viewers: []};
 const filter = new Filter({ placeHolder: '*' });
 
 const storage = multer.diskStorage({
@@ -31,16 +32,13 @@ const upload = multer({storage, limits:{fileSize: 20*1024*1024}});
 app.post('/upload-private', upload.single('file'), async (req, res)=>{
   const {room, sender, receiver} = req.body;
   if(!req.file) return res.status(400).json({error:'لا يوجد ملف'});
-  
   const url = '/uploads/' + req.file.filename;
   const time = getTime();
   const ext = path.extname(req.file.originalname).toLowerCase();
-  
   let msgType = 'file';
   if(['.jpg','.jpeg','.png','.gif','.webp'].includes(ext)) msgType = 'image';
   if(['.mp3','.ogg','.wav','.webm'].includes(ext)) msgType = 'audio';
   if(['.mp4','.webm'].includes(ext)) msgType = 'video';
-  
   const result = await db.run(`INSERT INTO private_messages (room, sender, receiver, content, time) VALUES (?,?,?,?,?)`, room, sender, receiver, url, time);
   const msg = {id: result.lastID, type: msgType, content: url, filename: req.file.originalname, from: sender, time: time};
   io.to(room).emit('private_message', msg);
@@ -67,6 +65,22 @@ io.on('connection', socket=>{
     users[socket.id] = {...u,...user, id:socket.id, room:u.room};
     socket.join(u.room);
     updateUserList(u.room);
+  });
+
+  socket.on('leave', room=>{
+    socket.leave(room);
+    if(users[socket.id]) users[socket.id].room = '';
+    updateUserList(room);
+  });
+
+  socket.on('chat_message', async d=>{
+    const me = users[socket.id]; if(!me) return;
+    let content = d.content;
+    const shortcuts = await db.all("SELECT * FROM shortcuts");
+    shortcuts.forEach(s=> content = content.replace(new RegExp(`\\b${s.key}\\b`, 'g'), s.value));
+    content = filter.clean(content);
+    const time = getTime();
+    io.to(d.room).emit('chat_message', {from: me.name, content: content, time: time});
   });
 
   socket.on('open_private', async (targetName)=>{
@@ -102,7 +116,7 @@ io.on('connection', socket=>{
 
   socket.on('delete_private_msg', async d=>{
     await db.run("DELETE FROM private_messages WHERE id=?", d.msgId);
-    d.forEveryone ? io.to(d.room).emit('delete_private_message', d.msgId) : socket.emit('delete_private_message', d.msgId);
+    d.forEveryone? io.to(d.room).emit('delete_private_message', d.msgId) : socket.emit('delete_private_message', d.msgId);
   });
 
   socket.on('report_private_msg', async d=>{
@@ -127,6 +141,26 @@ io.on('connection', socket=>{
     if(me.rank!=='owner' && me.rank!=='supervisor') return;
     await db.run("UPDATE reports SET status='closed' WHERE id=?", d.reportId);
     socket.emit('system', 'تم اغلاق البلاغ');
+  });
+
+  socket.on('start_live', async ()=>{
+    const me = users[socket.id];
+    if(me.rank!=='owner' && me.rank!=='supervisor') return socket.emit('error','ليس لديك صلاحية');
+    liveStream.active = true; liveStream.host = me.name;
+    io.emit('live_started', {host: me.name});
+  });
+
+  socket.on('stop_live', ()=>{
+    const me = users[socket.id];
+    if(liveStream.host!== me.name) return;
+    liveStream.active = false; liveStream.host = null; liveStream.viewers = [];
+    io.emit('live_stopped');
+  });
+
+  socket.on('join_live', ()=>{
+    if(!liveStream.active) return socket.emit('error','لا يوجد بث الان');
+    liveStream.viewers.push(socket.id);
+    socket.emit('live_info', {host: liveStream.host, viewers: liveStream.viewers.length});
   });
 
   socket.on('register', async data=>{ await db.run("INSERT INTO members (name,password,gender) VALUES (?,?,?)", data.name,data.password,data.gender); socket.emit('register_ok'); });
