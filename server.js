@@ -11,12 +11,18 @@ const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs'); // <-- مهم
 
 app.use(express.static('public'));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 app.use('/data', express.static('data'));
+
+// ===== الحل هنا =====
+// انشئ مجلد data و uploads لو مش موجود
+if (!fs.existsSync('./data')) fs.mkdirSync('./data');
+if (!fs.existsSync('./uploads')) fs.mkdirSync('./uploads');
+// ===================
 
 const db = new sqlite3.Database('./data/chat.db');
 db.serialize(()=>{
@@ -48,6 +54,7 @@ io.on('connection', (socket)=>{
     db.get("SELECT * FROM members WHERE name=?",[data.name], async (err,row)=>{
       if(row && await bcrypt.compare(data.password,row.password)){
         onlineUsers[row.name]=socket.id;
+        socket.name = row.name; // <-- مهم
         socket.emit('login_ok',row);
       } else socket.emit('error_msg','خطا في الدخول');
     });
@@ -56,6 +63,7 @@ io.on('connection', (socket)=>{
   socket.on('guest', (data)=>{
     let guest = {name:data.name,rank:'guest'};
     onlineUsers[guest.name]=socket.id;
+    socket.name = guest.name; // <-- مهم
     socket.emit('login_ok',guest);
   });
 
@@ -82,7 +90,7 @@ io.on('connection', (socket)=>{
   socket.on('private_message',(data)=>{
     const time = new Date().toLocaleTimeString('ar');
     db.run("INSERT INTO private_messages (room,from_name,to_name,content,type,time) VALUES (?,?,?,?,?,?)",[data.room,socket.name,data.receiver,data.content,data.msgType,time]);
-    io.to(data.room).emit('private_message',{from:socket.name,content:data.content,type:data.msgType,time:time,id:this.lastID});
+    io.to(data.room).emit('private_message',{from:socket.name,content:data.content,type:data.msgType,time:time});
   });
 
   socket.on('start_live',()=>{ liveHost=socket.name; io.emit('live_started',{host:liveHost}); });
