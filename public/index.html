@@ -1,144 +1,107 @@
-<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>شات اليمن المطور</title>
-<style>
-:root{--green:#075e54}
-*{box-sizing:border-box;font-family:tahoma;margin:0;padding:0}
-body{background:#e5ddd5;height:100vh;overflow:hidden}
-.main-menu{display:flex;justify-content:center;align-items:center;height:100%;gap:20px;background:linear-gradient(135deg,#075e54,#128c7e)}
-.menu-btn{background:#fff;color:var(--green);border:none;padding:20px 40px;font-size:18px;font-weight:bold;border-radius:15px;cursor:pointer}
-.popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:999}
-.popup-box{background:#fff;padding:20px;border-radius:15px;width:90%;max-width:400px}
-.btn-main{background:var(--green);color:#fff;border:none;padding:12px;width:100%;border-radius:8px;cursor:pointer;margin-top:10px}
-.topbar{height:50px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 10px}
-#chatArea{display:none;height:100vh;flex-direction:column}
-.hide{display:none}
-.user-item{display:flex;align-items:center;padding:10px;border-bottom:1px solid #eee;cursor:pointer}
-.user-item:hover{background:#f5f5f5}
-.user-status{width:10px;height:10px;border-radius:50%;margin-left:8px}
-.online{background:#4CAF50}
-</style>
-</head>
-<body>
+const express = require('express');
+const app = express();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+const sqlite3 = require('sqlite3').verbose();
+const bcrypt = require('bcrypt');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
-<div class="main-menu" id="mainMenu">
-  <button class="menu-btn" onclick="openPopup('guest')">1- دخول زوار</button>
-  <button class="menu-btn" onclick="openPopup('login')">2- دخول الأعضاء</button>
-  <button class="menu-btn" onclick="openPopup('register')">3- تسجيل</button>
-</div>
+app.use(express.static('public'));
+app.use(express.json());
+app.use('/uploads', express.static('uploads'));
+app.use('/data', express.static('data'));
 
-<div class="popup" id="guestPopup"><div class="popup-box"><span onclick="closePopup('guest')" style="float:left;cursor:pointer">&times;</span><h3>دخول زائر</h3><input id="guestName" placeholder="اسم المستخدم"><button class="btn-main" onclick="guestLogin()">دخول</button></div></div>
-<div class="popup" id="loginPopup"><div class="popup-box"><span onclick="closePopup('login')" style="float:left;cursor:pointer">&times;</span><h3>دخول الأعضاء</h3><input id="loginName" placeholder="الاسم"><input id="loginPass" type="password" placeholder="كلمة السر"><button class="btn-main" onclick="memberLogin()">دخول</button></div></div>
-<div class="popup" id="registerPopup"><div class="popup-box"><span onclick="closePopup('register')" style="float:left;cursor:pointer">&times;</span><h3>انشاء حساب</h3><input id="regName" placeholder="الاسم"><input id="regPass" type="password" placeholder="كلمة السر"><input id="regPass2" type="password" placeholder="تأكيد"><button class="btn-main" onclick="register()">انشاء</button></div></div>
+const db = new sqlite3.Database('./data/chat.db');
+db.serialize(()=>{
+  db.run("CREATE TABLE IF NOT EXISTS members (id INTEGER PRIMARY KEY, name TEXT UNIQUE, password TEXT, gender TEXT, rank TEXT, avatar TEXT)");
+  db.run("CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, room TEXT, from_name TEXT, content TEXT, type TEXT, time TEXT)");
+  db.run("CREATE TABLE IF NOT EXISTS private_messages (id INTEGER PRIMARY KEY, room TEXT, from_name TEXT, to_name TEXT, content TEXT, type TEXT, filename TEXT, time TEXT)");
+  db.run("CREATE TABLE IF NOT EXISTS reports (id INTEGER PRIMARY KEY, reporter TEXT, reported TEXT, room TEXT, msg_id INTEGER, reason TEXT, status TEXT)");
+});
 
-<div id="roomsList" class="hide" style="padding:20px;background:linear-gradient(135deg,#075e54,#128c7e);height:100%">
-<h2 style="text-align:center;color:#fff">اختر الغرفة</h2>
-<div onclick="joinRoom('عام')" style="background:#fff;margin:10px;padding:15px;border-radius:10px;text-align:center;cursor:pointer">🌎 غرفة العامة 🌎</div>
-</div>
+const storage = multer.diskStorage({
+  destination: './uploads/',
+  filename: (req, file, cb) => cb(null, Date.now()+'-'+file.originalname)
+});
+const upload = multer({storage});
 
-<div id="chatArea">
-  <div class="topbar">
-    <button onclick="leaveRoom()">←</button>
-    <div>غرفة: <span id="roomName"></span></div>
-    <div>
-      <button onclick="startLive()" id="liveBtn" class="hide" style="background:red;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer">🔴 بث</button>
-      <button onclick="openReports()" id="reportsBtn" class="hide" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer">🚩</button>
-    </div>
-  </div>
-  <div style="flex:1;display:flex">
-    <div id="sidebar" style="width:30%;background:#fff;border-left:1px solid #ddd;overflow:auto">
-      <div style="padding:10px;background:var(--green);color:#fff;text-align:center;font-weight:bold">👥 الاعضاء - <span id="usersCount">0</span></div>
-      <div id="usersList"></div>
-    </div>
-    <div style="flex:1;display:flex;flex-direction:column">
-      <div id="chatMessages" style="flex:1;overflow:auto;padding:10px;background:#e5ddd5"></div>
-      <div style="display:flex;padding:10px;background:#f0f0f0;gap:5px">
-        <input id="msgInput" placeholder="اكتب رسالة..." style="flex:1;padding:10px;border-radius:20px;border:1px solid #ddd" onkeypress="if(event.key==='Enter') sendMsg()">
-        <button onclick="sendMsg()" style="background:var(--green);color:#fff;border:none;padding:10px 20px;border-radius:20px;cursor:pointer">➤</button>
-      </div>
-    </div>
-  </div>
-</div>
+let onlineUsers = {};
+let liveHost = null;
 
-<div class="popup" id="privatePopup" style="z-index:1001">
-  <div class="popup-box" style="max-width:400px;height:500px;display:flex;flex-direction:column">
-    <span onclick="closePopup('private')" style="float:left;cursor:pointer">&times;</span>
-    <h3>💬 خاص مع: <span id="privateWith"></span></h3>
-    <div id="privateMessages" style="flex:1;overflow:auto;background:#e5ddd5;padding:10px;border-radius:8px;margin:10px 0"></div>
-    <div id="recordingStatus" style="text-align:center;color:red;font-size:12px;display:none">🔴 جاري التسجيل...</div>
-    <div style="display:flex;gap:5px">
-      <input type="file" id="privateFileUpload" style="display:none" onchange="uploadPrivateFile()">
-      <button onclick="document.getElementById('privateFileUpload').click()" style="background:#888;color:#fff;border:none;padding:10px;border-radius:20px;cursor:pointer">📎</button>
-      <button onclick="showPrivateSmiles()" style="background:#888;color:#fff;border:none;padding:10px;border-radius:20px;cursor:pointer">😀</button>
-      <button id="recordBtn" onmousedown="startRecording()" onmouseup="stopRecording()" style="background:#ff4444;color:#fff;border:none;padding:10px;border-radius:20px;cursor:pointer">🎤</button>
-      <input id="privateInput" placeholder="اكتب رسالة..." style="flex:1;padding:10px;border-radius:20px;border:1px solid #ddd" onkeypress="if(event.key==='Enter') sendPrivateMsg()">
-      <button onclick="sendPrivateMsg()" style="background:var(--green);color:#fff;border:none;padding:10px 20px;border-radius:20px;cursor:pointer">➤</button>
-    </div>
-  </div>
-</div>
+io.on('connection', (socket)=>{
+  socket.on('register', async (data)=>{
+    const hash = await bcrypt.hash(data.password, 10);
+    db.run("INSERT INTO members (name,password,gender,rank) VALUES (?,?,?,'member')",[data.name,hash,data.gender],(err)=>{
+      if(err) socket.emit('error_msg','الاسم موجود');
+      else socket.emit('register_ok');
+    });
+  });
 
-<div class="popup" id="privateEmojiPopup"><div class="popup-box"><span onclick="closePopup('privateEmoji')" style="float:left;cursor:pointer">&times;</span><h3>الايموجي</h3><div id="privateEmojiList" style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px;max-height:300px;overflow:auto"></div></div></div>
-<div class="popup" id="reportsPopup"><div class="popup-box" style="max-width:600px;max-height:80vh;overflow:auto"><span onclick="closePopup('reports')" style="float:left;cursor:pointer">&times;</span><h3>🚩 لوحة البلاغات</h3><div id="reportsList"></div></div></div>
-<div class="popup" id="livePopup" style="z-index:1002"><div class="popup-box" style="max-width:800px;width:95%"><span onclick="closePopup('live')" style="float:left;cursor:pointer">&times;</span><h3>🔴 البث المباشر - <span id="liveHost"></span></h3><video id="liveVideo" autoplay playsinline style="width:100%;background:#000;border-radius:10px;max-height:500px"></video><div style="text-align:center;margin-top:10px"><span>المشاهدين: <b id="viewersCount">0</b></span><button onclick="stopLive()" id="stopLiveBtn" class="hide" style="background:red;color:#fff;border:none;padding:10px 20px;border-radius:8px;margin-right:10px;cursor:pointer">ايقاف البث</button></div></div></div>
+  socket.on('login', (data)=>{
+    db.get("SELECT * FROM members WHERE name=?",[data.name], async (err,row)=>{
+      if(row && await bcrypt.compare(data.password,row.password)){
+        onlineUsers[row.name]=socket.id;
+        socket.emit('login_ok',row);
+      } else socket.emit('error_msg','خطا في الدخول');
+    });
+  });
 
-<audio id="notifySound" src="https://cdn.pixabay.com/download/audio/2022/03/24/audio_d1716f18ba.mp3" preload="auto"></audio>
-<div id="privateDeleteMenu" style="position:absolute;display:none;background:#fff;border:1px solid #ccc;border-radius:8px;z-index:2000;box-shadow:0 2px 10px rgba(0,0,0,0.2)"><div onclick="deletePrivateMsg(false)" style="padding:10px;cursor:pointer;border-bottom:1px solid #eee">🗑️ حذف عندي فقط</div><div onclick="deletePrivateMsg(true)" style="padding:10px;cursor:pointer;border-bottom:1px solid #eee;color:red">🗑️ حذف للجميع</div><div onclick="reportPrivateMsg()" style="padding:10px;cursor:pointer;color:#ff4444">🚩 تبليغ</div></div>
-<div id="liveNotification" class="hide" style="position:fixed;bottom:20px;right:20px;background:red;color:#fff;padding:15px;border-radius:10px;cursor:pointer;z-index:2001" onclick="joinLive()">🔴 <b id="liveHostName"></b> بدأ البث - اضغط للمشاهدة</div>
+  socket.on('guest', (data)=>{
+    let guest = {name:data.name,rank:'guest'};
+    onlineUsers[guest.name]=socket.id;
+    socket.emit('login_ok',guest);
+  });
 
-<script src="/socket.io/socket.io.js"></script>
-<script>
-const socket = io();
-let currentUser = {}; let currentRoom = ''; let privateRoom = ''; let privateReceiver = ''; let deleteMsgId = 0; let reportMsgId = 0; let reportUser = '';
-let mediaRecorder; let audioChunks = []; let isRecording = false; let localStream; let isHost = false;
+  socket.on('join', (data)=>{
+    socket.join(data.room);
+    io.to(data.room).emit('users_list',Object.keys(onlineUsers).map(n=>({name:n,rank:'member'})));
+  });
 
-if('Notification' in window && Notification.permission === 'default'){ Notification.requestPermission(); }
-function openPopup(t){document.getElementById(t+'Popup').style.display='flex'}
-function closePopup(t){document.getElementById(t+'Popup').style.display='none'}
-function guestLogin(){currentUser={name:guestName.value}; socket.emit('join',{...currentUser, room:'عام'}); showRooms(); closePopup('guest')}
-function memberLogin(){socket.emit('login',{name:loginName.value, password:loginPass.value})}
-function register(){if(regPass.value!==regPass2.value) return alert('غير متطابق'); socket.emit('register',{name:regName.value, password:regPass.value})}
-socket.on('login_ok', m=>{ currentUser=m; showRooms(); closePopup('login'); if(m.rank==='owner' || m.rank==='supervisor') {document.getElementById('reportsBtn').classList.remove('hide'); document.getElementById('liveBtn').classList.remove('hide');} })
-socket.on('register_ok', ()=>{alert('تم'); closePopup('register')})
-function showRooms(){mainMenu.style.display='none'; roomsList.classList.remove('hide')}
-function joinRoom(r){currentRoom=r; roomsList.classList.add('hide'); chatArea.style.display='flex'; document.getElementById('roomName').innerText = r; socket.emit('join',{...currentUser, room:r})}
-function leaveRoom(){chatArea.style.display='none'; roomsList.classList.remove('hide'); socket.emit('leave', currentRoom);}
-function sendMsg(){if(!msgInput.value.trim()) return; socket.emit('chat_message', {room: currentRoom, content: msgInput.value}); msgInput.value = '';}
-function showUserMenu(username){ if(username === currentUser.name) return; socket.emit('open_private', username); }
-function sendPrivateMsg(){ if(!privateInput.value.trim()) return; socket.emit('private_message', {room: privateRoom, content: privateInput.value, msgType: 'text'}); privateInput.value = ''; }
-function showPrivateSmiles(){const list = document.getElementById('privateEmojiList'); list.innerHTML = ''; for(let i=1; i<=30; i++){ const src = `/smiles/${i}.gif`; list.innerHTML += `<img src="${src}" style="width:50px;height:50px;cursor:pointer" onclick="insertPrivateEmoji('${src}')" onerror="this.style.display='none'">`; } openPopup('privateEmoji');}
-function insertPrivateEmoji(src){ socket.emit('private_message', {room: privateRoom, content: `<img src="${src}" style="width:40px;height:40px">`, msgType: 'text'}); closePopup('privateEmoji'); }
-async function startRecording(){if(isRecording) return; isRecording = true; document.getElementById('recordingStatus').style.display = 'block'; document.getElementById('recordBtn').style.background = '#ff0000'; const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream); audioChunks = []; mediaRecorder.ondataavailable = e => audioChunks.push(e.data); mediaRecorder.onstop = async () => { const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); await uploadPrivateAudio(audioBlob); stream.getTracks().forEach(track => track.stop()); }; mediaRecorder.start();}
-function stopRecording(){ if(!isRecording) return; isRecording = false; document.getElementById('recordingStatus').style.display = 'none'; document.getElementById('recordBtn').style.background = '#ff4444'; mediaRecorder.stop(); }
-async function uploadPrivateFile(){const file = document.getElementById('privateFileUpload').files; if(!file) return; const formData = new FormData(); formData.append('file', file); formData.append('room', privateRoom); formData.append('sender', currentUser.name); formData.append('receiver', privateReceiver); await fetch('/upload-private', {method:'POST', body:formData}); document.getElementById('privateFileUpload').value = '';}
-async function uploadPrivateAudio(blob){const formData = new FormData(); formData.append('file', blob, 'voice.webm'); formData.append('room', privateRoom); formData.append('sender', currentUser.name); formData.append('receiver', privateReceiver); await fetch('/upload-private', {method:'POST', body:formData});}
-function getFileIcon(url){const ext = url.split('.').pop().toLowerCase(); if(['jpg','jpeg','png','gif','webp'].includes(ext)) return '🖼️'; if(['mp3','ogg','wav','webm'].includes(ext)) return '🎵'; if(['mp4','webm'].includes(ext)) return '🎬'; return '📎';}
-function renderPrivateMsg(msg, sender, msgId){const align = sender === currentUser.name? 'right' : 'left'; const bg = sender === currentUser.name? '#DCF8C6' : '#fff'; let content = msg.content; if(msg.type==='image') content = `<img src="${msg.content}" style="max-width:180px;border-radius:8px" onclick="window.open(this.src)">`; if(msg.type==='audio') content = `<audio controls src="${msg.content}"></audio>`; if(msg.type==='video') content = `<video controls src="${msg.content}" style="max-width:200px"></video>`; if(msg.type==='file') content = `<a href="${msg.content}" target="_blank">${getFileIcon(msg.content)} ${msg.filename || 'ملف'}</a>`; privateMessages.innerHTML += `<div id="pm-${msgId}" style="text-align:${align};margin:5px 0" oncontextmenu="event.preventDefault(); showPrivateDelete(event, ${msgId})"><div style="display:inline-block;background:${bg};padding:8px 12px;border-radius:8px;max-width:80%"><b>${sender}</b><br>${content}<br><small>${msg.time}</small></div></div>`; privateMessages.scrollTop = 99999;}
-function showPrivateDelete(e, msgId){deleteMsgId = msgId; const msgDiv = document.getElementById('pm-'+msgId); reportMsgId = msgId; reportUser = msgDiv.querySelector('b').innerText; const menu = document.getElementById('privateDeleteMenu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px';}
-function deletePrivateMsg(forEveryone){ socket.emit('delete_private_msg', {msgId: deleteMsgId, room: privateRoom, forEveryone: forEveryone}); document.getElementById('privateDeleteMenu').style.display = 'none'; }
-function reportPrivateMsg(){ const reason = prompt('سبب التبليغ:'); if(!reason) return; socket.emit('report_private_msg', {msgId: reportMsgId, reported: reportUser, room: privateRoom, reason: reason}); document.getElementById('privateDeleteMenu').style.display = 'none'; }
-function openReports(){ socket.emit('get_reports'); openPopup('reports'); }
-function closeReport(id){ socket.emit('close_report', {reportId: id}); }
-function startLive(){socket.emit('start_live'); openPopup('live'); isHost = true; document.getElementById('stopLiveBtn').classList.remove('hide'); navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(stream=>{localStream = stream; document.getElementById('liveVideo').srcObject = stream;}).catch(()=>alert('لم يتم السماح بالكاميرا'));}
-function stopLive(){socket.emit('stop_live'); if(localStream) localStream.getTracks().forEach(t=>t.stop()); closePopup('live'); isHost = false;}
-function joinLive(){socket.emit('join_live'); openPopup('live'); document.getElementById('liveNotification').classList.add('hide');}
+  socket.on('chat_message', (data)=>{
+    const time = new Date().toLocaleTimeString('ar');
+    db.run("INSERT INTO messages (room,from_name,content,type,time) VALUES (?,?,?,?,?)",[data.room,socket.name,data.content,'text',time]);
+    io.to(data.room).emit('chat_message',{from:socket.name,content:data.content,time:time});
+  });
 
-socket.on('chat_message', msg=>{ chatMessages.innerHTML += `<div style="margin:5px 0"><b>${msg.from}</b>: ${msg.content} <small>${msg.time}</small></div>`; chatMessages.scrollTop = 99999; });
-socket.on('private_opened', data=>{ privateRoom = data.room; privateReceiver = data.with; document.getElementById('privateWith').innerText = data.with; openPopup('private'); });
-socket.on('private_invite', data=>{ if(confirm(`${data.from} يريد محادثة خاصة. موافق؟`)){ socket.join(data.room); privateRoom = data.room; privateReceiver = data.from; document.getElementById('privateWith').innerText = data.from; openPopup('private'); } });
-socket.on('private_message', msg=> renderPrivateMsg(msg, msg.from, msg.id));
-socket.on('private_history', msgs=>{ privateMessages.innerHTML = ''; msgs.forEach(msg=>{ let type = 'text'; if(msg.content.startsWith('/uploads/')){ const ext = msg.content.split('.').pop().toLowerCase(); if(['jpg','jpeg','png','gif','webp'].includes(ext)) type = 'image'; else if(['mp3','ogg','wav','webm'].includes(ext)) type = 'audio'; else if(['mp4','webm'].includes(ext)) type = 'video'; else type = 'file'; } renderPrivateMsg({type:type, content:msg.content, time:msg.time, filename:msg.content.split('/').pop()}, msg.sender, msg.id); }); });
-socket.on('delete_private_message', msgId=>{ const el = document.getElementById('pm-'+msgId); if(el) el.remove(); });
-socket.on('private_notification', data=>{document.getElementById('notifySound').play().catch(()=>{}); if(navigator.vibrate) navigator.vibrate([200, 100, 200]); if(Notification.permission === 'granted'){ new Notification('رسالة خاصة جديدة', {body: `رسالة من ${data.from}`}); }});
-socket.on('reports_list', reports=>{const list = document.getElementById('reportsList'); if(reports.length===0) list.innerHTML = '<p>لا يوجد بلاغات</p>'; else{ list.innerHTML = reports.map(r=>`<div style="border:1px solid #ddd;padding:10px;margin:10px 0"><b>المبلغ:</b> ${r.reporter}<br><b>المبلغ عنه:</b> ${r.reported}<br><b>السبب:</b> ${r.reason}<br><b>المحتوى:</b> <div style="background:#f5f5f5;padding:5px">${r.content}</div><button onclick="closeReport(${r.id})" style="background:red;color:#fff;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;margin-top:5px">اغلاق</button></div>`).join(''); }});
-socket.on('new_report', data=>{ if(currentUser.rank==='owner' || currentUser.rank==='supervisor'){ alert(`🚩 بلاغ جديد من ${data.reporter}`); } });
-socket.on('live_started', data=>{document.getElementById('liveNotification').classList.remove('hide'); document.getElementById('liveHostName').innerText = data.host; document.getElementById('notifySound').play();});
-socket.on('live_stopped', ()=>{document.getElementById('liveNotification').classList.add('hide'); closePopup('live'); if(localStream) localStream.getTracks().forEach(t=>t.stop());});
-socket.on('live_info', data=>{document.getElementById('liveHost').innerText = data.host; document.getElementById('viewersCount').innerText = data.viewers;});
-socket.on('users_list', users=>{usersCount.innerText = users.length; usersList.innerHTML = ''; users.forEach(u=>{ usersList.innerHTML += `<div class="user-item" onclick="showUserMenu('${u.name}')"><img src="${u.avatar || `https://ui-avatars.com/api/?name=${u.name}`}" style="width:35px;height:35px;border-radius:50%;margin-left:8px"><div style="flex:1"><div style="font-weight:bold">${u.name}</div></div><div class="user-status online"></div></div>`; });});
-document.onclick = ()=> document.getElementById('privateDeleteMenu').style.display = 'none';
-socket.on('error', msg=>alert(msg));
-</script>
-</body>
-</html>
+  socket.on('open_private',(target)=>{
+    const room = [socket.name,target].sort().join('_');
+    socket.join(room);
+    socket.emit('private_opened',{room:room});
+    db.all("SELECT * FROM private_messages WHERE room=?",[room],(err,rows)=>{
+      socket.emit('private_history',rows);
+    });
+  });
+
+  socket.on('private_message',(data)=>{
+    const time = new Date().toLocaleTimeString('ar');
+    db.run("INSERT INTO private_messages (room,from_name,to_name,content,type,time) VALUES (?,?,?,?,?,?)",[data.room,socket.name,data.receiver,data.content,data.msgType,time]);
+    io.to(data.room).emit('private_message',{from:socket.name,content:data.content,type:data.msgType,time:time,id:this.lastID});
+  });
+
+  socket.on('start_live',()=>{ liveHost=socket.name; io.emit('live_started',{host:liveHost}); });
+  socket.on('join_live',()=>{ socket.join('live'); });
+
+  socket.on('disconnect',()=>{
+    for(let n in onlineUsers){ if(onlineUsers[n]==socket.id) delete onlineUsers[n]; }
+  });
+});
+
+app.post('/upload-private', upload.single('file'), (req,res)=>{
+  const {room,sender,receiver} = req.body;
+  const time = new Date().toLocaleTimeString('ar');
+  const type = req.file.mimetype.startsWith('image')?'image':req.file.mimetype.startsWith('audio')?'audio':'file';
+  db.run("INSERT INTO private_messages (room,from_name,to_name,content,type,filename,time) VALUES (?,?,?,?,?,?,?)",
+    [room,sender,receiver,'/uploads/'+req.file.filename,type,req.file.originalname,time]);
+  io.to(room).emit('private_message',{from:sender,content:'/uploads/'+req.file.filename,type:type,time:time,filename:req.file.originalname});
+  res.send('ok');
+});
+
+const PORT = process.env.PORT || 3000;
+http.listen(PORT,()=>console.log('Server running on '+PORT));
