@@ -597,7 +597,6 @@ io.on('connection', (socket) => {
 
   // ===== HELPER FUNCTION =====
   function sendOnlineUsers(room) {
-    if (!room) return;
     db.all("SELECT id, name, rank FROM members WHERE is_online = 1", [], (err, dbUsers) => {
       let users = (dbUsers || []).map(u => ({
         name: u.name,
