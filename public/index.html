@@ -918,3 +918,144 @@
   <div class="sidebar-header">
     <h3>المتواجدين</h3>
    
+    msgDiv.textContent = data.content;
+    document.getElementById('messages').appendChild(msgDiv);
+  });
+
+  socket.on ( ' users_list' , ( users ) = > {   
+    const  usersList  =  document.getElementById ( ' usersList ' ) ;
+    usersList.innerHTML = ' ' ;  
+
+    لكل مستخدم في قائمة المستخدمين {  
+      const  userDiv  =  document.createElement ( ' div ' ) ;
+      userDiv . className  =  'عنصر المستخدم' ؛
+      userDiv.onclick = ( ) = > viewUserProfile ( user.name ) ;    
+      userDiv . innerHTML  =  `
+        <div class="user-status" style="background: ${ user . online ? '#4caf50' : '#999' } "></div>
+        <div class="user-info">
+          <div class="user-name"> ${ user . name } </div>
+          <div class="user-rank"> ${ getRankEmoji ( user . rank ) }  ${ user . rank } </div>
+        </div>
+      ` ;
+      قائمة المستخدمين . appendChild ( userDiv ) ؛
+    } ) ;
+
+    document.getElementById ( ' onlineCount ' ) . textContent = users.filter ( u = > u.online ) .length + ' متصل ' ;      
+  } ) ;
+
+  socket.on ( ' private_opened ' , ( data ) = > {   
+    console.log ( ' تم فتح المحادثة بواسطة: ' , data.with ) ; 
+  } ) ;
+
+  socket.on ( ' private_history' , ( messages ) = > {   
+    console.log ( ' تم تحميل الرسائل الخاصة: ' , messages.length ) ; 
+  } ) ;
+
+  // ===== وظائف الرسائل =====
+  دالة  إرسال الرسالة ( )  {
+    const  input  =  document.getElementById ( ' msgInput ' ) ;
+    const  content  =  input.value.trim ( ) ;
+
+    إذا  لم يكن هناك محتوى ،  فقم بالخروج .
+
+    socket.emit ( ' chat_message ' , { room : currentRoom , content } ) ;  
+    input.value = ' ' ;  
+    input.focus ( ) ;
+  }
+
+  دالة  رفع الملف ( )  {
+    تنبيه ( 'سيتم إضافة رفع الملفات قريبا 📁' ) ;
+  }
+
+  دالة  تسجيل الصوت ( )  {
+    تنبيه ( 'سيتم إضافة تسجيل الصوت قريبا 🎙️' ) ;
+  }
+
+  دالة  تبديل الرموز التعبيرية ( )  {
+    تنبيه ( 'سيتم إضافة قائمة الإيموجي قريبا 😊' ) ;
+  }
+
+  // ===== وظائف الغرفة =====
+  دالة  تحميل الغرف ( )  {
+    const  roomsList  =  document.getElementById ( ' roomsList ' ) ;
+    roomsList.innerHTML = `  
+      <div class="room-item active" onclick="joinRoom('main')"><i class="fas fa-home"></i> <span class="room-item-name">الغرفة الرئيسية</span></div>
+      <div class="room-item" onclick="joinRoom('yemen')"><i class="fas fa-flag"></i> <span class="room-item-name"> غرفة اليمن</span></div>
+      <div class="room-item" onclick="joinRoom('saudi')"><i class="fas fa-flag"></i> <span class="room-item-name">غرفة السعودية</span></div>
+      <div class="room-item" onclick="joinRoom('egypt')"><i class="fas fa-flag"></i> <span class="room-item-name"> الغرفة مصر</span></div>
+    ` ;
+  }
+
+  دالة  joinRoom ( اسم الغرفة )  {
+    الغرفة الحالية  =  اسم الغرفة ؛
+    المقبس . تنبعث ( 'انضمام' ،  {  غرفة : اسم الغرفة  } ) ؛
+
+    وثيقة . getElementById ( 'roomName' ) . textContent  =  اسم الغرفة ؛
+    وثيقة . getElementById ( "الرسائل" ) . الداخليHTML  =  '' ;
+
+    document.querySelectorAll ( ' . room -item ' ) . forEach ( item = > item.classList.remove ( ' active ' ) ) ;  
+    event.target.closest ( ' . room - item' ) . classList.add ( ' active ' ) ;
+
+    toggleSidebar ( 'rooms' ) ;
+  }
+
+  // ===== وظائف الملف الشخصي =====
+  دالة  تحديث عرض الملف الشخصي ( )  {
+    document.getElementById ( ' profileNameLabel ' ) . textContent = me.name ;  
+    وثيقة . getElementById ( 'profileRankLabel' ) . textContent  =  ( getRankEmoji ( me . rank )  ||  '👤' )  +  ' '  +  me . رتبة ؛
+    document.getElementById ( ' creditValue ' ) . textContent = me.credits || 0 ;    
+  }
+
+  دالة  تحديث الملف الشخصي ( )  {
+    const  bio  =  document.getElementById ( ' profileBio ' ) . value ;
+    const  status  =  document.getElementById ( ' profileStatus ' ) . value ;
+    socket.emit ( ' update_profile ' , { bio , status } ) ; 
+  }
+
+  دالة  عرض ملف تعريف المستخدم ( اسم المستخدم )  {
+    socket.emit ( ' get_user_profile ' , userName ) ; 
+  }
+
+  دالة  إضافة مربع حوار صديق ( )  {
+     اسم  ثابت =  موجه ( 'أدخل اسم الصديق:' ) ;
+    إذا كان  ( الاسم ) socket.emit  ( ' add_friend ' , الاسم ) ؛ 
+  }
+
+  // ===== دوال مساعدة =====
+  وظيفة  getRankEmoji ( رتبة )  {
+    const  emojis  =  {
+      'ضيف' : '🤖' ,
+      'member' : '👤' ,
+      'مميز' : '💎' ,
+      'moderator' : '🛡️' ,
+      'admin' : '☆' ,
+      'superadmin' : '⭐' ,
+      'المالك' : '👑'
+    } ;
+    إرجاع  الرموز التعبيرية [ الرتبة ]  ||  '👤' ;
+  }
+
+  دالة  escapeHtml ( نص )  {
+    const  div  =  document.createElement ( ' div ' ) ;
+    div.textContent = text ;  
+    return  div.innerHTML ;
+  }
+
+  // ===== أحداث لوحة المفاتيح =====
+  document.getElementById ( ' msgInput' ) ?. addEventListener ( 'keypress' , ( e ) = > {   
+    إذا كان  ( مفتاح e يساوي 'Enter' ) أرسل رسالة ( ) ;   
+  } ) ;
+
+  // التمرير التلقائي عند التحميل
+  window.addEventListener ( ' load' , ( ) = > {   
+    const  messagesDiv  =  document.getElementById ( ' messages ' ) ;
+    إذا كان  ( messagesDiv )  {
+      messagesDiv.scrollTop = messagesDiv.scrollHeight ;  
+    }
+  } ) ;
+</script>
+
+</body>
+</html>
+</html>
+  
